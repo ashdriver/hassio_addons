@@ -1,0 +1,11 @@
+name: "Tank Dial"
+description: "Read analog rotary dial"
+version: "1.0.0"
+slug: "tank_dial"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
