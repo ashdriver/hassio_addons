@@ -251,7 +251,7 @@ def getAngle(image,debug):
         print(str (datetime.datetime.now()) + "] Final Angle of the dial:", finalAngle)
         cv2.imwrite('/config/www/outputOut.jpg', contourOut)
 
-    (rc,_) = client.publish("homeassistant/tankdial/result", str(finalAngle), qos=1)
+    (rc,_) = client.publish("homeassistant/sensor/tankdial/result", str(finalAngle), qos=1)
 
     if rc != 0:
         print("Publish Error rc: " + str(rc))
@@ -270,6 +270,6 @@ client.connect(MQTT_SERVER, MQTT_PORT)
 
 client.on_message=image_ready
 
-client.subscribe("homeassistant/tankdial/image_ready")
+client.subscribe("homeassistant/sensor/tankdial/image_ready")
 
 client.loop_forever()
