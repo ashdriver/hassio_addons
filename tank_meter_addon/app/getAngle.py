@@ -32,6 +32,7 @@ contrastThreshold = 140
 
 
 def getAngle(image,debug):
+    originalImage = image.copy()
     height, width, channels = np.shape(image)
     mask = np.zeros((height,width))
     # iterate over all pixels in the image and assign 0 to the mask(x,y) if image(x,y) has channels==old_color
@@ -255,8 +256,9 @@ def getAngle(image,debug):
     if debug:
         print(str (datetime.datetime.now()) + "] Final Angle of the dial:", finalAngle)
         cv2.imwrite('/config/www/outputOut.jpg', contourOut)
-        cv2.line(image, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2) 
-        cv2.imwrite('/config/www/finalAngle.jpg', image)        
+        cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2) 
+        cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)        
+        cv2.imwrite('/config/www/finalAngle.jpg', originalImage)        
 
     (rc,_) = client.publish("tankdial/result", str(finalAngle), qos=1)
 
