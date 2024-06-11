@@ -7,19 +7,19 @@ import json
  
 
 
-LOG_LEVEL = sys.argv[7]
+LOG_LEVEL = sys.argv[8]
 if LOG_LEVEL == "DEBUG":
     print(sys.argv)
 
 MQTT_SERVER = "10.0.0.77"
-MQTT_SERVER = sys.argv[3]
+MQTT_SERVER = sys.argv[4]
 MQTT_PORT = 1883
 try:
-    MQTT_PORT = int(sys.argv[4])
+    MQTT_PORT = int(sys.argv[5])
 except:
     pass
-MQTT_USER = sys.argv[5]
-MQTT_PASS = sys.argv[6]
+MQTT_USER = sys.argv[6]
+MQTT_PASS = sys.argv[7]
 
 CENTER_X = int(sys.argv[1])
 CENTER_Y = int(sys.argv[2])
@@ -28,7 +28,7 @@ mask_color = [135,160,150]
 
 diff = 7 # How much more red before masking
 clipLevel = 120 # how bright before masking 
-contrastThreshold = 140
+contrastThreshold = sys.argv[3]
 
 
 def getAngle(image,debug):

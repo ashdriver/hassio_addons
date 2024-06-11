@@ -1,6 +1,6 @@
 name: "Tank Dial"
 description: "Read analog rotary dial"
-version: "1.1.15"
+version: "1.1.17"
 slug: "tank_dial"
 init: false
 apparmor: false
@@ -15,6 +15,7 @@ arch:
 options:
   centre_x: 402
   centre_y: 228
+  contrastThreshold: 228
   MQTT_HOST: "core-mosquitto"
   MQTT_PORT: 1883
   MQTT_USERNAME: "mqtt_user"
@@ -23,6 +24,7 @@ options:
 schema:
   centre_x: int
   centre_y: int
+  contrastThreshold: int
   MQTT_HOST: str
   MQTT_PORT: port
   MQTT_USERNAME: str
