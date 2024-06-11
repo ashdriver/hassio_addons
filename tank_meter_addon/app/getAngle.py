@@ -28,7 +28,7 @@ mask_color = [135,160,150]
 
 diff = 7 # How much more red before masking
 clipLevel = 120 # how bright before masking 
-contrastThreshold = sys.argv[3]
+contrastThreshold = int(sys.argv[3])
 
 
 def getAngle(image,debug):
