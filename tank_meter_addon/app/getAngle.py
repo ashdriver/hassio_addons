@@ -259,6 +259,9 @@ def getAngle(image,debug):
 
 def image_ready(client, userdata, msg):
     image = cv2.imread('/config/www/tankmeter1.jpg')
+    if image is None:
+        print("Could not open image")
+        return
     if LOG_LEVEL == "DEBUG":
         getAngle(image, True)
     else:
