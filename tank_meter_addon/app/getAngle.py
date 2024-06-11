@@ -251,7 +251,7 @@ def getAngle(image,debug):
         print(str (datetime.datetime.now()) + "] Final Angle of the dial:", finalAngle)
         cv2.imwrite('/config/www/outputOut.jpg', contourOut)
 
-    (rc,_) = client.publish("/tankdial/result", str(finalAngle), qos=1)
+    (rc,_) = client.publish("tankdial/result", str(finalAngle), qos=1)
 
     if rc != 0:
         print("Publish Error rc: " + str(rc))
@@ -273,6 +273,6 @@ client.on_message=image_ready
 autoDiscoverPayload ={  "~": "tankdial","unit_of_measurement":"degrees","device_class":"level","state_class": "measurement","state_topic":"~/result","name":"Rain Tank Level Dial Angle","unique_id":"raintank_dialangle","device":{"identifiers":["tankdial"],"name":"Rain Tank",}}
 client.publish("homeassistant/sensor/tankdial/result/config", json.dumps(autoDiscoverPayload))
 
-client.subscribe("/tankdial/image_ready")
+client.subscribe("tankdial/image_ready")
 
 client.loop_forever()
