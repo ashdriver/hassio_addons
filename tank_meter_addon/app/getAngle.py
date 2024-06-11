@@ -21,8 +21,8 @@ except:
 MQTT_USER = sys.argv[5]
 MQTT_PASS = sys.argv[6]
 
-CENTER_X = int(sys.argv[0])
-CENTER_Y = int(sys.argv[1])
+CENTER_X = int(sys.argv[1])
+CENTER_Y = int(sys.argv[2])
 
 mask_color = [135,160,150]
 
