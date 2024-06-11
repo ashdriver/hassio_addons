@@ -7,22 +7,22 @@ import json
  
 
 
-LOG_LEVEL = sys.argv[5]
+LOG_LEVEL = sys.argv[7]
 if LOG_LEVEL == "DEBUG":
     print(sys.argv)
 
 MQTT_SERVER = "10.0.0.77"
-MQTT_SERVER = sys.argv[1]
+MQTT_SERVER = sys.argv[3]
 MQTT_PORT = 1883
 try:
-    MQTT_PORT = int(sys.argv[2])
+    MQTT_PORT = int(sys.argv[4])
 except:
     pass
-MQTT_USER = sys.argv[3]
-MQTT_PASS = sys.argv[4]
+MQTT_USER = sys.argv[5]
+MQTT_PASS = sys.argv[6]
 
-CENTER_X = 395
-CENTER_Y = 237
+CENTER_X = sys.argv[0]
+CENTER_Y = sys.argv[1]
 
 mask_color = [135,160,150]
 
