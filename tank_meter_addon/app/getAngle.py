@@ -42,7 +42,7 @@ def getAngle(image,debug):
 
     image[coords_x,coord_y,:]=mask_color
     if debug:
-        cv2.imwrite('/config/www/mask.jpg', image)
+        cv2.imwrite('/config/www/maskred.jpg', image)
 
     #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     #adjusted = cv2.convertScaleAbs(image, alpha=1.0, beta=0)
@@ -56,7 +56,7 @@ def getAngle(image,debug):
     image[coords_x,coord_y,:]=mask_color
 
     if debug:
-        cv2.imwrite('/config/www/cmask.jpg', image)
+        cv2.imwrite('/config/www/maskbright.jpg', image)
 
     # Donut:
     hh, ww = image.shape[:2]
@@ -126,8 +126,7 @@ def getAngle(image,debug):
     ret,contrastIn = cv2.threshold(maskIn,contrastThreshold,255,cv2.THRESH_BINARY)
 
     if debug:
-        #cv2.imwrite('edges.jpg', edges)
-        cv2.imwrite('contrastin.jpg', contrastIn)
+        cv2.imwrite('/config/www/contrastIn.jpg', contrastIn)
 
     ret,contrastOut = cv2.threshold(maskOut,contrastThreshold,255,cv2.THRESH_BINARY)
 
@@ -143,9 +142,10 @@ def getAngle(image,debug):
         print("Got " + str(len(contours)) + " inner contours")
     ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)
-    for contour in contours:
-        # Approximate the contour
 
+    cx = 0
+    cy = 0
+    for contour in contours:
         M = cv2.moments(contour)
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
@@ -162,7 +162,7 @@ def getAngle(image,debug):
             print("Inner angle: " + str(innerAngle))
 
     if debug:
-        cv2.imwrite('outputIn.jpg', ContourIn)
+        cv2.imwrite('/config/www/outputIn.jpg', ContourIn)
 
     # Find contours
     contours, _ = cv2.findContours(contrastOut.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -170,6 +170,10 @@ def getAngle(image,debug):
         print("Got " + str(len(contours)) + " outer contours")
     contourOut = cv2.cvtColor(contrastOut, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(contourOut, contours, -1, (0,255,0), 3)
+
+    cox = 0
+    coy = 0
+
     for contour in contours:
         # Approximate the contour
         #peri = cv2.arcLength(contour, True)
@@ -220,14 +224,13 @@ def getAngle(image,debug):
                 print("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
 
             M = cv2.moments(contour)
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
+            cox = int(M['m10']/M['m00'])
+            coy = int(M['m01']/M['m00'])
             if debug:
-                print( "Centroid: " + str(cx) + " x " + str(cy) )
+                print( "Outer Centroid: " + str(cox) + " x " + str(coy) )
 
-            dx = CENTER_X - cx
-            dy = CENTER_Y - cy
-
+            dx = CENTER_X - cox
+            dy = CENTER_Y - coy
 
             outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
             if debug:
@@ -241,6 +244,8 @@ def getAngle(image,debug):
     finalAngle = outerAngle
     if outerAngle == -1:
         finalAngle = innerAngle
+        cox = cx
+        coy = cy
         if LOG_LEVEL == "INFO":
             print("No outer Angle found")
     else:
@@ -250,6 +255,8 @@ def getAngle(image,debug):
     if debug:
         print(str (datetime.datetime.now()) + "] Final Angle of the dial:", finalAngle)
         cv2.imwrite('/config/www/outputOut.jpg', contourOut)
+        cv2.line(image, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2) 
+        cv2.imwrite('/config/www/finalAngle.jpg', image)        
 
     (rc,_) = client.publish("tankdial/result", str(finalAngle), qos=1)
 
