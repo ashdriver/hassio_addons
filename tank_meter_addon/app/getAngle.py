@@ -179,11 +179,6 @@ def getAngle(image,debug):
     outerAngle = -1
 
     for contour in contours:
-        # Approximate the contour
-        #peri = cv2.arcLength(contour, True)
-        #approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
-    #    print("Got " + str(len(approx)) + " vertices")
-
         # Get the bounding box of the contour
         (x, y, w, h) = cv2.boundingRect(contour)
     #    print("Bounding box: " + str(x) + " x " + str(y) + " w " + str(w) + " h " + str(h))
@@ -261,8 +256,10 @@ def getAngle(image,debug):
 
     if debug:
         writeDebugImage('outputOut.jpg', contourOut)
-        cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2) 
-        cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)        
+        cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2)
+        cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)
+        cv2.line(originalImage, (cx-5,cy-5), (cx+5,y+5), (50,50,255), 2)
+        cv2.line(originalImage, (cx-5,cy+5), (cx+5,y-5), (50,50,255), 2)        
         writeDebugImage('finalAngle.jpg', originalImage)
 
     innerAngle = round(innerAngle,2)
