@@ -232,7 +232,7 @@ def getAngle(image,debug):
             dy = CENTER_Y - coy
 
             outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            log.debug("Outer Angle of the dial:", outerAngle)
+            log.debug("Outer Angle of the dial:" + str(outerAngle))
 
             # Draw a rectangle around the contour
 #            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -246,7 +246,7 @@ def getAngle(image,debug):
         coy = cy
         log.info("No outer Angle found")
     else:
-        log.info("Outer Angle found ", outerAngle)
+        log.info("Outer Angle found " + str(outerAngle))
 
     if debug:
         writeDebugImage('outputOut.jpg', contourOut)
