@@ -30,6 +30,12 @@ diff = 7 # How much more red before masking
 clipLevel = 120 # how bright before masking 
 contrastThreshold = int(sys.argv[3])
 
+innerInnerRadius = 80
+outerInnerRadius = 95
+
+innerOuterRadius = 140
+outerOuterRadius = 200
+
 
 def getAngle(image,debug):
     originalImage = image.copy()
@@ -65,8 +71,7 @@ def getAngle(image,debug):
 
 
     # define circles
-    radius1 = 75
-    radius2 = 95
+
     xc = CENTER_X
     yc = CENTER_Y
 
@@ -75,20 +80,17 @@ def getAngle(image,debug):
 
     # draw filled circles in white on black background as masks
     mask1 = np.zeros_like(image)
-    mask1 = cv2.circle(mask1, (xc,yc), radius1, (255,255,255), -1)
+    mask1 = cv2.circle(mask1, (xc,yc), innerInnerRadius, (255,255,255), -1)
     mask2 = np.zeros_like(image)
-    mask2 = cv2.circle(mask2, (xc,yc), radius2, (255,255,255), -1)
+    mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, (255,255,255), -1)
 
     # subtract masks and make into single channel
     innerdonut = cv2.subtract(mask2, mask1)
 
-    radius3 = 140
-    radius4 = 200
-
     mask1 = np.zeros_like(image)
-    mask1 = cv2.circle(mask1, (xc,yc), radius3, (255,255,255), -1)
+    mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, (255,255,255), -1)
     mask2 = np.zeros_like(image)
-    mask2 = cv2.circle(mask2, (xc,yc), radius4, (255,255,255), -1)
+    mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, (255,255,255), -1)
 
     outerdonut = cv2.subtract(mask2, mask1)
 
@@ -107,17 +109,17 @@ def getAngle(image,debug):
     invedgesOut = cv2.bitwise_not(grayOut)
 
     mask1 = np.zeros_like(invedgesIn)
-    mask1 = cv2.circle(mask1, (xc,yc), radius1, (255,255,255), -1)
+    mask1 = cv2.circle(mask1, (xc,yc), innerInnerRadius, (255,255,255), -1)
     mask2 = np.zeros_like(invedgesIn)
-    mask2 = cv2.circle(mask2, (xc,yc), radius2, (255,255,255), -1)
+    mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, (255,255,255), -1)
 
     # subtract masks and make into single channel
     innerdonut = cv2.subtract(mask2, mask1)
 
     mask1 = np.zeros_like(invedgesOut)
-    mask1 = cv2.circle(mask1, (xc,yc), radius3, (255,255,255), -1)
+    mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, (255,255,255), -1)
     mask2 = np.zeros_like(invedgesOut)
-    mask2 = cv2.circle(mask2, (xc,yc), radius4, (255,255,255), -1)
+    mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, (255,255,255), -1)
 
     outerdonut = cv2.subtract(mask2, mask1)
 
