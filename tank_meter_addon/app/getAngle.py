@@ -141,7 +141,7 @@ def getAngle(image,debug):
     log.debug("Got " + str(len(contours)) + " inner contours")
     ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)
-
+    innerAngle = 0
     cx = 0
     cy = 0
     for contour in contours:
