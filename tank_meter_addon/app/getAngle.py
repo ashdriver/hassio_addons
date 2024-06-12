@@ -176,6 +176,8 @@ def getAngle(image,debug):
     cox = 0
     coy = 0
 
+    outerAngle = -1
+
     for contour in contours:
         # Approximate the contour
         #peri = cv2.arcLength(contour, True)
@@ -217,7 +219,6 @@ def getAngle(image,debug):
                 smallestAngle = largestAngle - 360
                 largestAngle = boundingAngles[0]
 
-        outerAngle = -1
         log.debug("Angles " + str(smallestAngle) + " <> " + str(largestAngle))
 
         if (smallestAngle < innerAngle < largestAngle ):
