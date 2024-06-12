@@ -143,7 +143,7 @@ def getAngle(image,debug):
     log.debug("Got " + str(len(contours)) + " inner contours")
     ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)
-    innerAngle = 0
+    innerAngle = -1000
     cx = 0
     cy = 0
     for contour in contours:
@@ -152,12 +152,12 @@ def getAngle(image,debug):
             cx = int(M['m10']/M['m00'])
         except:
             log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-            cx = 0
+            break
         try:
             cy = int(M['m01']/M['m00'])
         except:
             log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-            cy = -1000
+            break
 
         dx = CENTRE_X - cx
         dy = CENTRE_Y - cy
@@ -179,6 +179,10 @@ def getAngle(image,debug):
     coy = 0
 
     outerAngle = -1
+
+    if innerAngle == -1000 and len(contours) != 1 :
+        log.warning("Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
+        return
 
     for contour in contours:
         # Get the bounding box of the contour
@@ -218,7 +222,7 @@ def getAngle(image,debug):
 
         log.debug("Angles " + str(smallestAngle) + " <> " + str(largestAngle))
 
-        if (smallestAngle < innerAngle < largestAngle ):
+        if (smallestAngle < innerAngle < largestAngle or innerAngle == -1000):
             log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
 
             M = cv2.moments(contour)
@@ -226,13 +230,13 @@ def getAngle(image,debug):
                 cox = int(M['m10']/M['m00'])
             except:
                 log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-                cox = 0
+                continue
 
             try:
                 coy = int(M['m01']/M['m00'])
             except:
                 log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-                coy = -1000
+                continue
                 
             log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) )
 
@@ -246,6 +250,11 @@ def getAngle(image,debug):
 #            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             break
+
+    if innerAngle == -1000:
+        # Means no inner and single outer was bad.
+        log.warning("Skipping this round - no inner found single outer was bad")
+        return
 
     finalAngle = outerAngle
     if outerAngle == -1:
