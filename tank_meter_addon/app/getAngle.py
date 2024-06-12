@@ -8,25 +8,25 @@ import os
 import logging
 import sys
 
-LOG_LEVEL = sys.argv[8]
+LOG_LEVEL = os.environ['LOG_LEVEL']
 MQTT_SERVER = "10.0.0.77"
-MQTT_SERVER = sys.argv[4]
+MQTT_SERVER = os.environ['MQTT_HOST']
 MQTT_PORT = 1883
 try:
-    MQTT_PORT = int(sys.argv[5])
+    MQTT_PORT = os.environ['MQTT_PORT']
 except:
     pass
-MQTT_USER = sys.argv[6]
-MQTT_PASS = sys.argv[7]
+MQTT_USER = os.environ['MQTT_USER']
+MQTT_PASS = os.environ['MQTT_PASS']
 
-CENTER_X = int(sys.argv[1])
-CENTER_Y = int(sys.argv[2])
+CENTER_X = int(os.environ['CENTER_X'])
+CENTER_Y = int(os.environ['CENTER_Y'])
 
 mask_color = [135,160,150]
 
 diff = 7 # How much more red before masking
-clipLevel = 110 # how bright before masking 
-contrastThreshold = int(sys.argv[3])
+clipLevel = int(os.environ['BRIGHT']) # how bright before masking 
+contrastThreshold = int(os.environ['CONTRAST']) # threshold clip for masked image
 
 innerInnerRadius = 80
 outerInnerRadius = 95
@@ -309,7 +309,6 @@ logging.basicConfig(
 )
 
 log = logging.getLogger()
-log.debug(sys.argv)
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(MQTT_USER, MQTT_PASS)
