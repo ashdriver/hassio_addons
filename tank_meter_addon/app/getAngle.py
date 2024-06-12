@@ -4,8 +4,9 @@ import paho.mqtt.client as mqtt
 import sys
 import datetime;
 import json
- 
-
+import os
+import logging
+import sys
 
 LOG_LEVEL = sys.argv[8]
 if LOG_LEVEL == "DEBUG":
@@ -36,9 +37,11 @@ outerInnerRadius = 95
 innerOuterRadius = 140
 outerOuterRadius = 200
 
+OUTPUT_DIR = "/config/www/dialDebugImages/"
+
 def writeDebugImage(imageName,imageData):
     TS = str (datetime.datetime.now())
-    cv2.imwrite('/config/www/' + TS + imageName, imageData)
+    cv2.imwrite(OUTPUT_DIR + TS + imageName, imageData)
     cv2.imwrite('/config/www/' + imageName, imageData)
 
 
@@ -80,8 +83,7 @@ def getAngle(image,debug):
     xc = CENTER_X
     yc = CENTER_Y
 
-    if debug:
-        print("hh " + str(hh) + " ww: " + str(ww) + " xc: " + str(xc) + " yc: " + str(yc))
+    log.debug("hh " + str(hh) + " ww: " + str(ww) + " xc: " + str(xc) + " yc: " + str(yc))
 
     # draw filled circles in white on black background as masks
     mask1 = np.zeros_like(image)
@@ -144,8 +146,7 @@ def getAngle(image,debug):
 
     # Sort contours by area and find the largest contour
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-    if debug:
-        print("Got " + str(len(contours)) + " inner contours")
+    log.debug("Got " + str(len(contours)) + " inner contours")
     ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)
 
@@ -155,25 +156,20 @@ def getAngle(image,debug):
         M = cv2.moments(contour)
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
-        if debug:
-            print( "Centroid: " + str(cx) + " x " + str(cy) )
+        log.debug("Inner angle: " + str(innerAngle))( "Centroid: " + str(cx) + " x " + str(cy) )
 
         dx = CENTER_X - cx
         dy = CENTER_Y - cy
 
         innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-        if debug:
-            print("Angle of the dial:", innerAngle)
-        if LOG_LEVEL == "INFO":
-            print("Inner angle: " + str(innerAngle))
+        log.info("Inner angle: " + str(innerAngle))
 
     if debug:
         writeDebugImage('outputIn.jpg', ContourIn)
 
     # Find contours
     contours, _ = cv2.findContours(contrastOut.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    if debug:
-        print("Got " + str(len(contours)) + " outer contours")
+    log.debug("Got " + str(len(contours)) + " outer contours")
     contourOut = cv2.cvtColor(contrastOut, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(contourOut, contours, -1, (0,255,0), 3)
 
@@ -222,25 +218,21 @@ def getAngle(image,debug):
                 largestAngle = boundingAngles[0]
 
         outerAngle = -1
-        if debug:
-            print("Angles " + str(smallestAngle) + " <> " + str(largestAngle))
+        log.debug("Angles " + str(smallestAngle) + " <> " + str(largestAngle))
 
         if (smallestAngle < innerAngle < largestAngle ):
-            if debug:
-                print("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
+            log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
 
             M = cv2.moments(contour)
             cox = int(M['m10']/M['m00'])
             coy = int(M['m01']/M['m00'])
-            if debug:
-                print( "Outer Centroid: " + str(cox) + " x " + str(coy) )
+            log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) )
 
             dx = CENTER_X - cox
             dy = CENTER_Y - coy
 
             outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            if debug:
-                print("Outer Angle of the dial:", outerAngle)
+            log.debug("Outer Angle of the dial:", outerAngle)
 
             # Draw a rectangle around the contour
 #            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -252,14 +244,11 @@ def getAngle(image,debug):
         finalAngle = innerAngle
         cox = cx
         coy = cy
-        if LOG_LEVEL == "INFO":
-            print("No outer Angle found")
+        log.info("No outer Angle found")
     else:
-        if LOG_LEVEL == "INFO":
-            print("Outer Angle found ", outerAngle)
+        log.info("Outer Angle found ", outerAngle)
 
     if debug:
-        print(str (datetime.datetime.now()) + "] Final Angle of the dial:", finalAngle)
         writeDebugImage('outputOut.jpg', contourOut)
         cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2) 
         cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)        
@@ -269,24 +258,49 @@ def getAngle(image,debug):
     outerAngle = round(outerAngle,2)
     finalAngle = round(finalAngle,2)
 
-    if LOG_LEVEL == "INFO" or debug:
-        print(">>>>>>>>>>>>>> INNER:" + str(innerAngle) + " OUTER:" + str(outerAngle) + " FINAL:" + str(finalAngle))
+    log.info(">>>>>>>>>>>>>> INNER:" + str(innerAngle) + " OUTER:" + str(outerAngle) + " FINAL:" + str(finalAngle))
 
     (rc,_) = client.publish("tankdial/result", str(finalAngle), qos=1)
 
     if rc != 0:
-        print("Publish Error rc: " + str(rc))
+        log.error("Publish Error rc: " + str(rc))
 
 
 def image_ready(client, userdata, msg):
     image = cv2.imread('/config/www/tankmeter1.jpg')
     if image is None:
-        print("Could not open image")
+        log.error("Could not open image")
         return
     if LOG_LEVEL == "DEBUG":
         getAngle(image, True)
     else:
         getAngle(image, False)
+
+try:
+    os.mkdir(OUTPUT_DIR)
+except:
+    pass
+
+file_handler = logging.FileHandler(filename='/config/www/dial.log')
+stdout_handler = logging.StreamHandler(stream=sys.stdout)
+handlers = [file_handler, stdout_handler]
+
+logLevel = logging.ERROR
+if  LOG_LEVEL == "INFO" :
+    logLevel = logging.INFO
+if  LOG_LEVEL == "DEBUG" :
+    logLevel = logging.DEBUG
+if  LOG_LEVEL == "WARNING" :
+    logLevel = logging.WARNING
+
+
+logging.basicConfig(
+    level=logLevel,
+    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    handlers=handlers
+)
+
+log = logging.getLogger()
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(MQTT_USER, MQTT_PASS)
