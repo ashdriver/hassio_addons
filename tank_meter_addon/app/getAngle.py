@@ -36,6 +36,10 @@ outerInnerRadius = 95
 innerOuterRadius = 140
 outerOuterRadius = 200
 
+def writeDebugImage(imageName,imageData):
+    TS = str (datetime.datetime.now())
+    cv2.imwrite('/config/www/' + TS + imageName, imageData)
+
 
 def getAngle(image,debug):
     originalImage = image.copy()
@@ -49,7 +53,7 @@ def getAngle(image,debug):
 
     image[coords_x,coord_y,:]=mask_color
     if debug:
-        cv2.imwrite('/config/www/maskred.jpg', image)
+        writeDebugImage('maskred.jpg', image)
 
     #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     #adjusted = cv2.convertScaleAbs(image, alpha=1.0, beta=0)
@@ -63,7 +67,7 @@ def getAngle(image,debug):
     image[coords_x,coord_y,:]=mask_color
 
     if debug:
-        cv2.imwrite('/config/www/maskbright.jpg', image)
+        writeDebugImage('maskbright.jpg', image)
 
     # Donut:
     hh, ww = image.shape[:2]
@@ -98,8 +102,8 @@ def getAngle(image,debug):
     maskedOuter = cv2.bitwise_and(outerdonut, image)
 
     if debug:
-        cv2.imwrite('/config/www/innerdonut.jpg', maskedInner)
-        cv2.imwrite('/config/www/outerdonut.jpg', maskedOuter)
+        writeDebugImage('innerdonut..jpg', maskedInner)
+        writeDebugImage('outerdonut.jpg', maskedOuter)
 
     # Convert to grayscale
     grayIn = cv2.cvtColor(maskedInner, cv2.COLOR_BGR2GRAY)
@@ -128,13 +132,11 @@ def getAngle(image,debug):
 
     ret,contrastIn = cv2.threshold(maskIn,contrastThreshold,255,cv2.THRESH_BINARY)
 
-    if debug:
-        cv2.imwrite('/config/www/contrastIn.jpg', contrastIn)
-
     ret,contrastOut = cv2.threshold(maskOut,contrastThreshold,255,cv2.THRESH_BINARY)
 
     if debug:
-        cv2.imwrite('/config/www/contrastOut.jpg', contrastOut)
+        writeDebugImage('contrastIn.jpg', contrastIn)
+        writeDebugImage('contrastOut.jpg', contrastOut)
 
     # Find contours
     contours, _ = cv2.findContours(contrastIn.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -165,7 +167,7 @@ def getAngle(image,debug):
             print("Inner angle: " + str(innerAngle))
 
     if debug:
-        cv2.imwrite('/config/www/outputIn.jpg', ContourIn)
+        writeDebugImage('outputIn.jpg', ContourIn)
 
     # Find contours
     contours, _ = cv2.findContours(contrastOut.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -240,7 +242,7 @@ def getAngle(image,debug):
                 print("Outer Angle of the dial:", outerAngle)
 
             # Draw a rectangle around the contour
-            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
+#            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             break
 
@@ -257,10 +259,17 @@ def getAngle(image,debug):
 
     if debug:
         print(str (datetime.datetime.now()) + "] Final Angle of the dial:", finalAngle)
-        cv2.imwrite('/config/www/outputOut.jpg', contourOut)
+        writeDebugImage('outputOut.jpg', contourOut)
         cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2) 
         cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)        
-        cv2.imwrite('/config/www/finalAngle.jpg', originalImage)        
+        writeDebugImage('finalAngle.jpg', originalImage)
+
+    innerAngle = round(innerAngle,2)
+    outerAngle = round(outerAngle,2)
+    finalAngle = round(finalAngle,2)
+
+    if LOG_LEVEL == "INFO" or debug:
+        print(">>>>>>>>>>>>>> INNER:" + str(innerAngle) + " OUTER:" + str(outerAngle) + " FINAL:" + str(finalAngle))
 
     (rc,_) = client.publish("tankdial/result", str(finalAngle), qos=1)
 
