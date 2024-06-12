@@ -40,7 +40,7 @@ outerOuterRadius = 200
 OUTPUT_DIR = "/config/www/dialDebugImages/"
 
 def writeDebugImage(imageName,imageData):
-    TS = str (datetime.datetime.now())
+    TS = datetime.datetime.now().strftime("%H:%M-%y-%m-%d")
     cv2.imwrite(OUTPUT_DIR + TS + imageName, imageData)
     cv2.imwrite('/config/www/' + imageName, imageData)
 
@@ -156,12 +156,12 @@ def getAngle(image,debug):
         M = cv2.moments(contour)
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
-        log.debug("Inner angle: " + str(innerAngle))( "Centroid: " + str(cx) + " x " + str(cy) )
 
         dx = CENTER_X - cx
         dy = CENTER_Y - cy
 
         innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
+        log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) )        
         log.info("Inner angle: " + str(innerAngle))
 
     if debug:
