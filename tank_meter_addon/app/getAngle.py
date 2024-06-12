@@ -258,8 +258,8 @@ def getAngle(image,debug):
         writeDebugImage('outputOut.jpg', contourOut)
         cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2)
         cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)
-        cv2.line(originalImage, (cx-5,cy-5), (cx+5,y+5), (50,50,255), 2)
-        cv2.line(originalImage, (cx-5,cy+5), (cx+5,y-5), (50,50,255), 2)        
+        cv2.line(originalImage, (cx-5,cy-5), (cx+5,cy+5), (50,50,255), 2)
+        cv2.line(originalImage, (cx-5,cy+5), (cx+5,cy-5), (50,50,255), 2)        
         writeDebugImage('finalAngle.jpg', originalImage)
 
     innerAngle = round(innerAngle,2)
