@@ -13,7 +13,7 @@ MQTT_SERVER = "10.0.0.77"
 MQTT_SERVER = os.environ['MQTT_HOST']
 MQTT_PORT = 1883
 try:
-    MQTT_PORT = os.environ['MQTT_PORT']
+    MQTT_PORT = int(os.environ['MQTT_PORT'])
 except:
     pass
 MQTT_USER = os.environ['MQTT_USERNAME']
