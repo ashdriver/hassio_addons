@@ -146,8 +146,16 @@ def getAngle(image,debug):
     cy = 0
     for contour in contours:
         M = cv2.moments(contour)
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])
+        try:
+            cx = int(M['m10']/M['m00'])
+        except:
+            log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+            cx = 0
+        try:
+            cy = int(M['m01']/M['m00'])
+        except:
+            log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+            cy = -1000
 
         dx = CENTER_X - cx
         dy = CENTER_Y - cy
@@ -216,8 +224,18 @@ def getAngle(image,debug):
             log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
 
             M = cv2.moments(contour)
-            cox = int(M['m10']/M['m00'])
-            coy = int(M['m01']/M['m00'])
+            try:
+                cox = int(M['m10']/M['m00'])
+            except:
+                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+                cox = 0
+
+            try:
+                coy = int(M['m01']/M['m00'])
+            except:
+                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+                coy = -1000
+                
             log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) )
 
             dx = CENTER_X - cox
