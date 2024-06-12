@@ -16,8 +16,8 @@ try:
     MQTT_PORT = os.environ['MQTT_PORT']
 except:
     pass
-MQTT_USER = os.environ['MQTT_USER']
-MQTT_PASS = os.environ['MQTT_PASS']
+MQTT_USER = os.environ['MQTT_USERNAME']
+MQTT_PASS = os.environ['MQTT_PASSWORD']
 
 CENTER_X = int(os.environ['CENTER_X'])
 CENTER_Y = int(os.environ['CENTER_Y'])
