@@ -41,7 +41,11 @@ OUTPUT_DIR = "/config/www/dialDebugImages/"
 
 def writeDebugImage(imageName,imageData):
     TS = datetime.datetime.now().strftime("%H:%M-%y-%m-%d")
-    cv2.imwrite(OUTPUT_DIR + TS + imageName, imageData)
+    try:
+        os.mkdir(OUTPUT_DIR + TS)
+    except:
+        pass
+    cv2.imwrite(OUTPUT_DIR + TS + "/" +  imageName, imageData)
     cv2.imwrite('/config/www/' + imageName, imageData)
 
 
@@ -59,12 +63,6 @@ def getAngle(image,debug):
     if debug:
         writeDebugImage('maskred.jpg', image)
 
-    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    #adjusted = cv2.convertScaleAbs(image, alpha=1.0, beta=0)
-
-    #image = adjusted
-
-
     mask= [[ 0  if channels[2] < clipLevel or channels[1] < clipLevel or channels[0] < clipLevel else 1 for channels in row ] for row in image ]
     mask = np.array(mask)
     coords_x, coord_y = np.where(mask>0)
@@ -76,10 +74,7 @@ def getAngle(image,debug):
     # Donut:
     hh, ww = image.shape[:2]
 
-
-
     # define circles
-
     xc = CENTER_X
     yc = CENTER_Y
 
@@ -133,9 +128,9 @@ def getAngle(image,debug):
     maskIn =  cv2.bitwise_and(innerdonut, invedgesIn)
     maskOut =  cv2.bitwise_and(outerdonut, invedgesOut)
 
-    ret,contrastIn = cv2.threshold(maskIn,contrastThreshold,255,cv2.THRESH_BINARY)
+    _,contrastIn = cv2.threshold(maskIn,contrastThreshold,255,cv2.THRESH_BINARY)
 
-    ret,contrastOut = cv2.threshold(maskOut,contrastThreshold,255,cv2.THRESH_BINARY)
+    _,contrastOut = cv2.threshold(maskOut,contrastThreshold,255,cv2.THRESH_BINARY)
 
     if debug:
         writeDebugImage('contrastIn.jpg', contrastIn)
