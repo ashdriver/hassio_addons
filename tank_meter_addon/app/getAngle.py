@@ -9,9 +9,6 @@ import logging
 import sys
 
 LOG_LEVEL = sys.argv[8]
-if LOG_LEVEL == "DEBUG":
-    print(sys.argv)
-
 MQTT_SERVER = "10.0.0.77"
 MQTT_SERVER = sys.argv[4]
 MQTT_PORT = 1883
@@ -296,6 +293,7 @@ logging.basicConfig(
 )
 
 log = logging.getLogger()
+log.debug(sys.argv)
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(MQTT_USER, MQTT_PASS)
