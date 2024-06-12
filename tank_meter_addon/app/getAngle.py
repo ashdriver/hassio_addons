@@ -39,6 +39,7 @@ outerOuterRadius = 200
 def writeDebugImage(imageName,imageData):
     TS = str (datetime.datetime.now())
     cv2.imwrite('/config/www/' + TS + imageName, imageData)
+    cv2.imwrite('/config/www/' + imageName, imageData)
 
 
 def getAngle(image,debug):
