@@ -19,8 +19,8 @@ except:
 MQTT_USER = os.environ['MQTT_USERNAME']
 MQTT_PASS = os.environ['MQTT_PASSWORD']
 
-CENTER_X = int(os.environ['CENTER_X'])
-CENTER_Y = int(os.environ['CENTER_Y'])
+CENTRE_X = int(os.environ['CENTRE_X'])
+CENTRE_Y = int(os.environ['CENTRE_Y'])
 
 mask_color = [135,160,150]
 
@@ -72,8 +72,8 @@ def getAngle(image,debug):
     hh, ww = image.shape[:2]
 
     # define circles
-    xc = CENTER_X
-    yc = CENTER_Y
+    xc = CENTRE_X
+    yc = CENTRE_Y
 
     log.debug("hh " + str(hh) + " ww: " + str(ww) + " xc: " + str(xc) + " yc: " + str(yc))
 
@@ -157,8 +157,8 @@ def getAngle(image,debug):
             log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
             cy = -1000
 
-        dx = CENTER_X - cx
-        dy = CENTER_Y - cy
+        dx = CENTRE_X - cx
+        dy = CENTRE_Y - cy
 
         innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
         log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) )        
@@ -184,18 +184,18 @@ def getAngle(image,debug):
     #    print("Bounding box: " + str(x) + " x " + str(y) + " w " + str(w) + " h " + str(h))
 
         boundingAngles = []
-        dx = CENTER_X - x
-        dy = CENTER_Y - (y+h)
+        dx = CENTRE_X - x
+        dy = CENTRE_Y - (y+h)
         boundingAngles.append( 90 + np.arctan2(dy, dx) * 180 / np.pi)
 
-        dx = CENTER_X - x
-        dy = CENTER_Y - y
+        dx = CENTRE_X - x
+        dy = CENTRE_Y - y
         boundingAngles.append(90 + np.arctan2(dy, dx) * 180 / np.pi)
-        dx = CENTER_X - (x+w)
-        dy = CENTER_Y - y
+        dx = CENTRE_X - (x+w)
+        dy = CENTRE_Y - y
         boundingAngles.append( 90 + np.arctan2(dy, dx) * 180 / np.pi)
-        dx = CENTER_X - (x+w)
-        dy = CENTER_Y - (y+h)
+        dx = CENTRE_X - (x+w)
+        dy = CENTRE_Y - (y+h)
         boundingAngles.append( 90 + np.arctan2(dy, dx) * 180 / np.pi)
 
         for idx, angle in enumerate(boundingAngles):
@@ -234,8 +234,8 @@ def getAngle(image,debug):
                 
             log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) )
 
-            dx = CENTER_X - cox
-            dy = CENTER_Y - coy
+            dx = CENTRE_X - cox
+            dy = CENTRE_Y - coy
 
             outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
             log.debug("Outer Angle of the dial:" + str(outerAngle))
@@ -256,8 +256,8 @@ def getAngle(image,debug):
 
     if debug:
         writeDebugImage('outputOut.jpg', contourOut)
-        cv2.line(originalImage, (CENTER_X,CENTER_Y), (cox,coy), (255,50,50), 2)
-        cv2.line(originalImage, (cox,coy),(2*cox - CENTER_X,2*coy - CENTER_Y), (255,50,255), 2)
+        cv2.line(originalImage, (CENTRE_X,CENTRE_Y), (cox,coy), (255,50,50), 2)
+        cv2.line(originalImage, (cox,coy),(2*cox - CENTRE_X,2*coy - CENTRE_Y), (255,50,255), 2)
         cv2.line(originalImage, (cx-5,cy-5), (cx+5,cy+5), (50,50,255), 2)
         cv2.line(originalImage, (cx-5,cy+5), (cx+5,cy-5), (50,50,255), 2)        
         writeDebugImage('finalAngle.jpg', originalImage)
