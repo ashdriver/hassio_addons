@@ -8,6 +8,8 @@ import os
 import logging
 import sys
 
+print("Dial analysis app started.")
+
 LOG_LEVEL = os.environ['LOG_LEVEL']
 MQTT_SERVER = "10.0.0.77"
 MQTT_SERVER = os.environ['MQTT_HOST']
@@ -309,6 +311,8 @@ logging.basicConfig(
 )
 
 log = logging.getLogger()
+
+log.info("App Started.")
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(MQTT_USER, MQTT_PASS)
