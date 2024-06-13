@@ -240,16 +240,16 @@ def getAngle(image,debug):
             try:
                 cox = int(M['m10']/M['m00'])
             except:
-                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle)))
+                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle))
                 continue
 
             try:
                 coy = int(M['m01']/M['m00'])
             except:
-                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle)))
+                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle))
                 continue
                 
-            log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) + " between "  + str(smallestAngle) + " <> " + str(largestAngle)))
+            log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) + " between "  + str(smallestAngle) + " <> " + str(largestAngle))
 
             dx = CENTRE_X - cox
             dy = CENTRE_Y - coy
