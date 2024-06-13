@@ -39,7 +39,7 @@ outerOuterRadius = 200
 OUTPUT_DIR = "/config/www/dialDebugImages/"
 
 def writeDebugImage(imageName,imageData):
-    TS = datetime.datetime.now().strftime("%H:%M-%y-%m-%d")
+    TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
     try:
         os.mkdir(OUTPUT_DIR + TS)
     except:
