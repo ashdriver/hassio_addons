@@ -233,32 +233,28 @@ def getAngle(image,debug):
                 smallestAngle = largestAngle - 360
                 largestAngle = boundingAngles[0]
 
-        log.debug("Angles " + str(smallestAngle) + " <> " + str(largestAngle))
-
         if ((smallestAngle-1) < innerAngle < (largestAngle+1) or innerAngle == -1000):
-            log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
+            #log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
 
             M = cv2.moments(contour)
             try:
                 cox = int(M['m10']/M['m00'])
             except:
-                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle)))
                 continue
 
             try:
                 coy = int(M['m01']/M['m00'])
             except:
-                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle)))
                 continue
                 
-            log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) )
+            log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) + " between "  + str(smallestAngle) + " <> " + str(largestAngle)))
 
             dx = CENTRE_X - cox
             dy = CENTRE_Y - coy
 
             outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            log.debug("Outer Angle of the dial:" + str(outerAngle))
-
             # Draw a rectangle around the contour
 #            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
