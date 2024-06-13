@@ -240,7 +240,7 @@ def getAngle(image,debug):
 
         log.debug("Angles " + str(smallestAngle) + " <> " + str(largestAngle))
 
-        if (smallestAngle < innerAngle < largestAngle or innerAngle == -1000):
+        if ((smallestAngle-1) < innerAngle < (largestAngle+1) or innerAngle == -1000):
             log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
 
             M = cv2.moments(contour)
