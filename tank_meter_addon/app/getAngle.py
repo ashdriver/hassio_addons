@@ -58,7 +58,7 @@ def getAngle(image,debug):
         writeDebugImage('Thresholded.jpg', image)
 
     # Donut:
-    hh, ww = image.shape[:2]
+    hh, ww = otsuFullImage.shape[:2]
 
     # define circles
     xc = CENTRE_X
@@ -67,23 +67,23 @@ def getAngle(image,debug):
     log.debug("hh " + str(hh) + " ww: " + str(ww) + " xc: " + str(xc) + " yc: " + str(yc))
 
     # draw filled circles in white on black background as masks
-    mask1 = np.zeros_like(image)
+    mask1 = np.zeros_like(otsuFullImage)
     mask1 = cv2.circle(mask1, (xc,yc), innerInnerRadius, 255, -1)
-    mask2 = np.zeros_like(image)
+    mask2 = np.zeros_like(otsuFullImage)
     mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, 255, -1)
 
     # subtract masks and make into single channel
     innerdonut = cv2.subtract(mask2, mask1)
 
-    mask1 = np.zeros_like(image)
+    mask1 = np.zeros_like(otsuFullImage)
     mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, 255, -1)
-    mask2 = np.zeros_like(image)
+    mask2 = np.zeros_like(otsuFullImage)
     mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, 255, -1)
 
     outerdonut = cv2.subtract(mask2, mask1)
 
-    maskedInner = cv2.bitwise_and(innerdonut, image)
-    maskedOuter = cv2.bitwise_and(outerdonut, image)
+    maskedInner = cv2.bitwise_and(innerdonut, otsuFullImage)
+    maskedOuter = cv2.bitwise_and(outerdonut, otsuFullImage)
 
     if debug:
         writeDebugImage('innerdonut.jpg', maskedInner)
