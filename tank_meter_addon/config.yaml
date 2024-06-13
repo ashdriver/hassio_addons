@@ -1,6 +1,6 @@
 name: "Tank Dial"
 description: "Read analog rotary dial"
-version: "1.2.15"
+version: "1.2.16"
 slug: "tank_dial"
 init: false
 apparmor: false

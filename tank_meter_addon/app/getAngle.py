@@ -51,6 +51,8 @@ def writeDebugImage(imageName,imageData):
 
 def getAngle(image,debug):
     originalImage = image.copy()
+    if debug:
+        writeDebugImage('inputImage.jpg', image)
     height, width, channels = np.shape(image)
     mask = np.zeros((height,width))
     # iterate over all pixels in the image and assign 0 to the mask(x,y) if image(x,y) has channels==old_color
