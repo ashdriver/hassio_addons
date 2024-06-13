@@ -138,15 +138,15 @@ def getAngle(image,debug):
 
         # Sort contours by area and find the largest contour
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-        log.debug("Got " + str(len(contours)) + " inner contours")
+        if (len(contours) != 1):
+            log.debug("Got " + str(len(contours)) + " inner contours")
         ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
         cx = 0
         cy = 0
         for contour in contours:
             area = cv2.contourArea(contour)
-            log.debug("Inner contour Area: " + str(area))
-            if area < 40 or area > 200:
-                log.warning("BAD INNER AREA: " + str(area))
+            if area < 25 or area > 200:
+                log.debug("BAD INNER AREA: " + str(area) + " CONTRAST: " + str(innerContrast))
                 continue
             M = cv2.moments(contour)
             try:
@@ -164,12 +164,10 @@ def getAngle(image,debug):
             dy = CENTRE_Y - cy
 
             innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) )        
-            log.info("Inner angle: " + str(innerAngle))
+            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, @ threshold " + str(innerContrast))              
 
         innerContrast = innerContrast - 2
         if (innerAngle == -1000):
-            log.warning("Didnt get an inner region, trying threshold " + str(innerContrast))
             _,contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)
 
     if (innerAngle == -1000):
