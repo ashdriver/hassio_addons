@@ -26,7 +26,7 @@ CENTRE_Y = int(os.environ['CENTRE_Y'])
 
 mask_color = [135,160,150]
 
-diff = 7 # How much more red before masking
+diff = 10 # How much more red before masking
 clipLevel = int(os.environ['BRIGHT']) # how bright before masking 
 contrastThreshold = int(os.environ['CONTRAST']) # threshold clip for masked image
 
