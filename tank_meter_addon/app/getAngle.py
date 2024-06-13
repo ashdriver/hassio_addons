@@ -186,8 +186,8 @@ def getAngle(image,debug):
     # Find contours
     contours, _ = cv2.findContours(contrastOut.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     log.debug("Got " + str(len(contours)) + " outer contours")
-    contourOut = cv2.cvtColor(contrastOut, cv2.COLOR_GRAY2BGR)
-    cv2.drawContours(contourOut, contours, -1, (0,255,0), 3)
+    ContourOut = cv2.cvtColor(contrastOut, cv2.COLOR_GRAY2BGR)
+    cv2.drawContours(ContourOut, contours, -1, (0,255,0), 3)
 
     cox = 0
     coy = 0
@@ -282,7 +282,9 @@ def getAngle(image,debug):
         log.info("Outer Angle found " + str(outerAngle))
 
     if debug:
-        writeDebugImage('outputOut.jpg', contourOut)
+        writeDebugImage('outputOut.jpg', ContourOut)
+        originalImage = cv2.bitwise_or(ContourOut,originalImage)
+        originalImage = cv2.bitwise_or(ContourIn,originalImage)
         cv2.line(originalImage, (CENTRE_X,CENTRE_Y), (cox,coy), (255,50,50), 2)
         cv2.line(originalImage, (cox,coy),(2*cox - CENTRE_X,2*coy - CENTRE_Y), (255,50,255), 2)
         cv2.line(originalImage, (cx-5,cy-5), (cx+5,cy+5), (50,50,255), 2)
