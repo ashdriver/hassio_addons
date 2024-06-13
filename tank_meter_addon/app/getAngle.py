@@ -26,9 +26,10 @@ CENTRE_Y = int(os.environ['CENTRE_Y'])
 
 mask_color = [135,160,150]
 
-diff = 8 # How much more red before masking
+diff = 7 # How much more red before masking
 clipLevel = int(os.environ['BRIGHT']) # how bright before masking 
 contrastThreshold = int(os.environ['CONTRAST']) # threshold clip for masked image
+minRedLevelToMask = 90
 
 innerInnerRadius = 80
 outerInnerRadius = 95
@@ -53,7 +54,7 @@ def getAngle(image,debug):
     height, width, channels = np.shape(image)
     mask = np.zeros((height,width))
     # iterate over all pixels in the image and assign 0 to the mask(x,y) if image(x,y) has channels==old_color
-    mask= [[ 1  if channels[2] > (channels[1] + diff) or (channels[2] > channels[0] + diff) else 0 for channels in row ] for row in image ] 
+    mask= [[ 1  if ( channels[2] > (channels[1] + diff) or (channels[2] > channels[0] + diff)) and channels[2] > minRedLevelToMask else 0 for channels in row ] for row in image ] 
     mask = np.array(mask)
 
     coords_x, coord_y = np.where(mask>0)
