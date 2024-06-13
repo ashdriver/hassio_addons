@@ -171,7 +171,7 @@ def getAngle(image,debug):
         innerContrast = innerContrast - 5
         if (innerAngle == -1000):
             log.warning("Didnt get an inner region, trying threshold " + str(innerContrast))
-            _,contrastIn = cv2.threshold(maskIn,contrastThreshold,255,cv2.THRESH_BINARY)
+            _,contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)
 
     if debug:
         cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)        
