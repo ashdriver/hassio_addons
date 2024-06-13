@@ -29,7 +29,7 @@ mask_color = [135,160,150]
 diff = 7 # How much more red before masking
 clipLevel = int(os.environ['BRIGHT']) # how bright before masking 
 contrastThreshold = int(os.environ['CONTRAST']) # threshold clip for masked image
-minRedLevelToMask = 90
+minRedLevelToMask = 80
 
 innerInnerRadius = 80
 outerInnerRadius = 95
@@ -167,7 +167,7 @@ def getAngle(image,debug):
             log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) )        
             log.info("Inner angle: " + str(innerAngle))
 
-        innerContrast = innerContrast - 5
+        innerContrast = innerContrast - 2
         if (innerAngle == -1000):
             log.warning("Didnt get an inner region, trying threshold " + str(innerContrast))
             _,contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)
