@@ -193,6 +193,13 @@ def getAngle(image,debug):
     if innerAngle == -1000 :
         if len(contours) != 1 :
             log.warning("Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
+            log.warning(">>>>>> Skipping this round - no inner found single outer was bad")
+            TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
+            try:
+                os.mkdir(OUTPUT_DIR + "BAD/")
+            except:
+                pass
+            cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)            
             return
         else:
             log.warning("No Inner found - using single outer only")
