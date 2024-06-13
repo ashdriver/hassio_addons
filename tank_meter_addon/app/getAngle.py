@@ -148,7 +148,7 @@ def getAngle(image,debug):
         cx = 0
         cy = 0
         for contour in contours:
-            log.debug("Inner contour Area: " + cv2.contourArea(contour))
+            log.debug("Inner contour Area: " + str(cv2.contourArea(contour)))
             M = cv2.moments(contour)
             try:
                 cx = int(M['m10']/M['m00'])
