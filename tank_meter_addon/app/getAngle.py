@@ -131,7 +131,7 @@ def getAngle(image,debug):
     innerAngle = -1000
     innerContrast = contrastThreshold
     while innerAngle == -1000 and innerContrast > 25:
-        contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)        
+        _,contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)        
         # Find contours
         contours, _ = cv2.findContours(contrastIn.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
