@@ -24,17 +24,11 @@ MQTT_PASS = os.environ['MQTT_PASSWORD']
 CENTRE_X = int(os.environ['CENTRE_X'])
 CENTRE_Y = int(os.environ['CENTRE_Y'])
 
-mask_color = [135,160,150]
 
-diff = 8 # How much more red before masking
-clipLevel = int(os.environ['BRIGHT']) # how bright before masking 
-contrastThreshold = int(os.environ['CONTRAST']) # threshold clip for masked image
-minRedLevelToMask = 80
+innerInnerRadius = 110
+outerInnerRadius = 130
 
-innerInnerRadius = 80
-outerInnerRadius = 95
-
-innerOuterRadius = 140
+innerOuterRadius = 180
 outerOuterRadius = 200
 
 OUTPUT_DIR = "/config/www/dialDebugImages/"
@@ -56,22 +50,12 @@ def getAngle(image,debug):
     height, width, channels = np.shape(image)
     mask = np.zeros((height,width))
     # iterate over all pixels in the image and assign 0 to the mask(x,y) if image(x,y) has channels==old_color
-    mask= [[ 1  if ( channels[2] > (channels[1] + diff) or (channels[2] > channels[0] + diff)) and channels[2] > minRedLevelToMask else 0 for channels in row ] for row in image ] 
-    mask = np.array(mask)
-
-    coords_x, coord_y = np.where(mask>0)
-
-    image[coords_x,coord_y,:]=mask_color
+   
+    grayIn = cv2.cvtColor(originalImage, cv2.COLOR_BGR2GRAY)
+    ret2,otsuFullImage = cv2.threshold(grayIn,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    otsuFullImage = cv2.bitwise_not(otsuFullImage)
     if debug:
-        writeDebugImage('maskred.jpg', image)
-
-    mask= [[ 0  if channels[2] < clipLevel or channels[1] < clipLevel or channels[0] < clipLevel else 1 for channels in row ] for row in image ]
-    mask = np.array(mask)
-    coords_x, coord_y = np.where(mask>0)
-    image[coords_x,coord_y,:]=mask_color
-
-    if debug:
-        writeDebugImage('maskbright.jpg', image)
+        writeDebugImage('Thresholded.jpg', image)
 
     # Donut:
     hh, ww = image.shape[:2]
@@ -84,17 +68,17 @@ def getAngle(image,debug):
 
     # draw filled circles in white on black background as masks
     mask1 = np.zeros_like(image)
-    mask1 = cv2.circle(mask1, (xc,yc), innerInnerRadius, (255,255,255), -1)
+    mask1 = cv2.circle(mask1, (xc,yc), innerInnerRadius, 255, -1)
     mask2 = np.zeros_like(image)
-    mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, (255,255,255), -1)
+    mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, 255, -1)
 
     # subtract masks and make into single channel
     innerdonut = cv2.subtract(mask2, mask1)
 
     mask1 = np.zeros_like(image)
-    mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, (255,255,255), -1)
+    mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, 255, -1)
     mask2 = np.zeros_like(image)
-    mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, (255,255,255), -1)
+    mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, 255, -1)
 
     outerdonut = cv2.subtract(mask2, mask1)
 
@@ -105,49 +89,20 @@ def getAngle(image,debug):
         writeDebugImage('innerdonut.jpg', maskedInner)
         writeDebugImage('outerdonut.jpg', maskedOuter)
 
-    # Convert to grayscale
-    grayIn = cv2.cvtColor(maskedInner, cv2.COLOR_BGR2GRAY)
-    grayOut = cv2.cvtColor(maskedOuter, cv2.COLOR_BGR2GRAY)
-
-    invedgesIn = cv2.bitwise_not(grayIn)
-    invedgesOut = cv2.bitwise_not(grayOut)
-
-    mask1 = np.zeros_like(invedgesIn)
-    mask1 = cv2.circle(mask1, (xc,yc), innerInnerRadius, (255,255,255), -1)
-    mask2 = np.zeros_like(invedgesIn)
-    mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, (255,255,255), -1)
-
-    # subtract masks and make into single channel
-    innerdonut = cv2.subtract(mask2, mask1)
-
-    mask1 = np.zeros_like(invedgesOut)
-    mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, (255,255,255), -1)
-    mask2 = np.zeros_like(invedgesOut)
-    mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, (255,255,255), -1)
-
-    outerdonut = cv2.subtract(mask2, mask1)
-
-    maskIn =  cv2.bitwise_and(innerdonut, invedgesIn)
-    maskOut =  cv2.bitwise_and(outerdonut, invedgesOut)
-
     innerAngle = -1000
-    innerContrast = contrastThreshold
-    while innerAngle == -1000 and innerContrast > 25:
-        _,contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)        
-        # Find contours
-        contours, _ = cv2.findContours(contrastIn.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Sort contours by area and find the largest contour
-        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-        if (len(contours) > 1):
-            log.debug("Got " + str(len(contours)) + " inner contours, thresh: " + str(innerContrast))
-        ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
+    # Find contours
+    contours, _ = cv2.findContours(maskedInner, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    ContourIn = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)    
+    log.debug("Got " + str(len(contours)) + " inner contours.")
+    if (len(contours)  == 1):
         cx = 0
         cy = 0
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area < 25 or area > 200:
-                log.debug("BAD INNER AREA: " + str(area) + " CONTRAST: " + str(innerContrast))
+            if area < 25 or area > 700:
+                log.debug("BAD INNER AREA: " + str(area) )
                 continue
             M = cv2.moments(contour)
             try:
@@ -165,26 +120,20 @@ def getAngle(image,debug):
             dy = CENTRE_Y - cy
 
             innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, @ threshold " + str(innerContrast) + " area: " + str(area))
-
-        innerContrast = innerContrast - 2
+            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, area: " + str(area))
 
     if (innerAngle == -1000):
         log.warning("No inner region found, using default contrast for outer.")
-        innerContrast = contrastThreshold
 
-    _,contrastOut = cv2.threshold(maskOut,innerContrast,255,cv2.THRESH_BINARY)        
 
     if debug:
-        writeDebugImage('contrastIn.jpg', contrastIn)
-        writeDebugImage('contrastOut.jpg', contrastOut)
         cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)        
         writeDebugImage('outputIn.jpg', ContourIn)
 
     # Find contours
-    contours, _ = cv2.findContours(contrastOut.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(maskedOuter, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     log.debug("Got " + str(len(contours)) + " outer contours")
-    ContourOut = cv2.cvtColor(contrastOut, cv2.COLOR_GRAY2BGR)
+    ContourOut = cv2.cvtColor(maskedOuter, cv2.COLOR_GRAY2BGR)
     cv2.drawContours(ContourOut, contours, -1, (0,255,0), 3)
 
     cox = 0
