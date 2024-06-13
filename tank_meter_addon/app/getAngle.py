@@ -163,7 +163,7 @@ def getAngle(image,debug):
             dy = CENTRE_Y - cy
 
             innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, @ threshold " + str(innerContrast))              
+            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, @ threshold " + str(innerContrast) + " area: " + str(area))
 
         innerContrast = innerContrast - 2
 
