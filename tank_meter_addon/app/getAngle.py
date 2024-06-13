@@ -135,38 +135,45 @@ def getAngle(image,debug):
         writeDebugImage('contrastIn.jpg', contrastIn)
         writeDebugImage('contrastOut.jpg', contrastOut)
 
-    # Find contours
-    contours, _ = cv2.findContours(contrastIn.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Sort contours by area and find the largest contour
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-    log.debug("Got " + str(len(contours)) + " inner contours")
-    ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
-    cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)
     innerAngle = -1000
-    cx = 0
-    cy = 0
-    for contour in contours:
-        M = cv2.moments(contour)
-        try:
-            cx = int(M['m10']/M['m00'])
-        except:
-            log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-            break
-        try:
-            cy = int(M['m01']/M['m00'])
-        except:
-            log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-            break
+    innerContrast = contrastThreshold
+    while innerAngle == -1000 and innerContrast > 25:
+        # Find contours
+        contours, _ = cv2.findContours(contrastIn.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        dx = CENTRE_X - cx
-        dy = CENTRE_Y - cy
+        # Sort contours by area and find the largest contour
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
+        log.debug("Got " + str(len(contours)) + " inner contours")
+        ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
+        cx = 0
+        cy = 0
+        for contour in contours:
+            log.debug("Inner contour Area: " + cv2.contourArea(contour))
+            M = cv2.moments(contour)
+            try:
+                cx = int(M['m10']/M['m00'])
+            except:
+                log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+                continue
+            try:
+                cy = int(M['m01']/M['m00'])
+            except:
+                log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+                continue
 
-        innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-        log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) )        
-        log.info("Inner angle: " + str(innerAngle))
+            dx = CENTRE_X - cx
+            dy = CENTRE_Y - cy
+
+            innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
+            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) )        
+            log.info("Inner angle: " + str(innerAngle))
+
+        innerContrast = innerContrast - 5
+        if (innerAngle == -1000):
+            log.warning("Didnt get an inner region, trying threshold " + str(innerContrast))
 
     if debug:
+        cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)        
         writeDebugImage('outputIn.jpg', ContourIn)
 
     # Find contours
@@ -180,9 +187,12 @@ def getAngle(image,debug):
 
     outerAngle = -1
 
-    if innerAngle == -1000 and len(contours) != 1 :
-        log.warning("Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
-        return
+    if innerAngle == -1000 :
+        if len(contours) != 1 :
+            log.warning("Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
+            return
+        else:
+            log.warning("No Inner found - using single outer only")
 
     for contour in contours:
         # Get the bounding box of the contour
@@ -251,13 +261,12 @@ def getAngle(image,debug):
 
             break
 
-    if innerAngle == -1000:
-        # Means no inner and single outer was bad.
-        log.warning("Skipping this round - no inner found single outer was bad")
-        return
-
     finalAngle = outerAngle
     if outerAngle == -1:
+        if innerAngle == -1000:
+            # Means no inner and single outer was bad.
+            log.warning("Skipping this round - no inner found single outer was bad")
+            return        
         finalAngle = innerAngle
         cox = cx
         coy = cy
