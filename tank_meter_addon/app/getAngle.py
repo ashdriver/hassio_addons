@@ -128,18 +128,17 @@ def getAngle(image,debug):
     maskIn =  cv2.bitwise_and(innerdonut, invedgesIn)
     maskOut =  cv2.bitwise_and(outerdonut, invedgesOut)
 
-    _,contrastIn = cv2.threshold(maskIn,contrastThreshold,255,cv2.THRESH_BINARY)
-
     innerAngle = -1000
     innerContrast = contrastThreshold
     while innerAngle == -1000 and innerContrast > 25:
+        contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)        
         # Find contours
         contours, _ = cv2.findContours(contrastIn.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         # Sort contours by area and find the largest contour
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-        if (len(contours) != 1):
-            log.debug("Got " + str(len(contours)) + " inner contours")
+        if (len(contours) > 1):
+            log.debug("Got " + str(len(contours)) + " inner contours, thresh: " + str(innerContrast))
         ContourIn = cv2.cvtColor(contrastIn, cv2.COLOR_GRAY2BGR)
         cx = 0
         cy = 0
@@ -167,8 +166,6 @@ def getAngle(image,debug):
             log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, @ threshold " + str(innerContrast))              
 
         innerContrast = innerContrast - 2
-        if (innerAngle == -1000):
-            _,contrastIn = cv2.threshold(maskIn,innerContrast,255,cv2.THRESH_BINARY)
 
     if (innerAngle == -1000):
         log.warning("No inner region found, using default contrast for outer.")
