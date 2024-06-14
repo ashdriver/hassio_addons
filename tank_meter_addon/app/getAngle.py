@@ -137,10 +137,10 @@ def getAngle(image,debug):
 
     if debug:
         ContoursInner = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)    
-        cv2.drawContours(ContoursInner, contours, -1, (0,255,0), 3)        
+        #cv2.drawContours(ContoursInner, contours, -1, (0,255,0), 3)        
         writeDebugImage('outputIn.jpg', ContoursInner)
         ContoursOuter = cv2.cvtColor(maskedOuter, cv2.COLOR_GRAY2BGR)
-        cv2.drawContours(ContoursOuter, contours, -1, (0,255,0), 3)
+        #cv2.drawContours(ContoursOuter, contours, -1, (0,255,0), 3)
         writeDebugImage('outputOut.jpg', ContoursOuter)
 
     cox = 0
