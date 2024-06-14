@@ -165,6 +165,9 @@ def getAngle(image,debug):
             log.warning("No Inner found - using single outer only")
 
     for contour in contours:
+        if area < 60 or area > 1200:
+            log.error(">>> BAD OUTER AREA: " + str(area) )
+            continue        
         M = cv2.moments(contour)
         try:
             cox = int(M['m10']/M['m00'])
