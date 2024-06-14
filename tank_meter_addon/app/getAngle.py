@@ -94,8 +94,8 @@ def getAngle(image,debug):
     #Colour image to dispay contours with.
     if (len(contours)  != 1):
         log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
-        if (len(contours) > 3) :
-            log.warning(">>>>>> Skipping this round - too many inner coutnours.")
+        if (len(contours) > 1) :
+            log.warning(">>>>>> Skipping this round - too many inner contours (>1)).")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
