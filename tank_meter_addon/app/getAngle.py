@@ -52,7 +52,7 @@ def getAngle(image,debug):
     _,otsuFullImage = cv2.threshold(grayIn,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     otsuFullImage = cv2.bitwise_not(otsuFullImage)
     if debug:
-        writeDebugImage('Thresholded.jpg', image)
+        writeDebugImage('Thresholded.jpg', otsuFullImage)
 
     # Donut:
     hh, ww = otsuFullImage.shape[:2]
