@@ -106,7 +106,7 @@ def getAngle(image,debug):
     
     for contour in contours:
         area = cv2.contourArea(contour)
-        if area < 100 or area > 1000:
+        if area < 60 or area > 1000:
             log.error(">>> BAD INNER AREA: " + str(area) )
             continue
         M = cv2.moments(contour)
