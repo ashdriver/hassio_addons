@@ -47,12 +47,9 @@ def getAngle(image,debug):
     originalImage = image.copy()
     if debug:
         writeDebugImage('inputImage.jpg', image)
-    height, width, channels = np.shape(image)
-    mask = np.zeros((height,width))
-    # iterate over all pixels in the image and assign 0 to the mask(x,y) if image(x,y) has channels==old_color
-   
+
     grayIn = cv2.cvtColor(originalImage, cv2.COLOR_BGR2GRAY)
-    ret2,otsuFullImage = cv2.threshold(grayIn,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    _,otsuFullImage = cv2.threshold(grayIn,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     otsuFullImage = cv2.bitwise_not(otsuFullImage)
     if debug:
         writeDebugImage('Thresholded.jpg', image)
@@ -73,17 +70,17 @@ def getAngle(image,debug):
     mask2 = cv2.circle(mask2, (xc,yc), outerInnerRadius, 255, -1)
 
     # subtract masks and make into single channel
-    innerdonut = cv2.subtract(mask2, mask1)
+    innerdonutMask = cv2.subtract(mask2, mask1)
 
     mask1 = np.zeros_like(otsuFullImage)
     mask1 = cv2.circle(mask1, (xc,yc), innerOuterRadius, 255, -1)
     mask2 = np.zeros_like(otsuFullImage)
     mask2 = cv2.circle(mask2, (xc,yc), outerOuterRadius, 255, -1)
 
-    outerdonut = cv2.subtract(mask2, mask1)
+    outerdonutMask = cv2.subtract(mask2, mask1)
 
-    maskedInner = cv2.bitwise_and(innerdonut, otsuFullImage)
-    maskedOuter = cv2.bitwise_and(outerdonut, otsuFullImage)
+    maskedInner = cv2.bitwise_and(innerdonutMask, otsuFullImage)
+    maskedOuter = cv2.bitwise_and(outerdonutMask, otsuFullImage)
 
     if debug:
         writeDebugImage('innerdonut.jpg', maskedInner)
@@ -91,50 +88,54 @@ def getAngle(image,debug):
 
     innerAngle = -1000
 
-    # Find contours
+    # Find inner contours
     contours, _ = cv2.findContours(maskedInner, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-    ContourIn = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)    
-    log.debug("Got " + str(len(contours)) + " inner contours.")
-    if (len(contours)  == 1):
-        cx = 0
-        cy = 0
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            if area < 25 or area > 700:
-                log.debug("BAD INNER AREA: " + str(area) )
-                continue
-            M = cv2.moments(contour)
-            try:
-                cx = int(M['m10']/M['m00'])
-            except:
-                log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-                continue
-            try:
-                cy = int(M['m01']/M['m00'])
-            except:
-                log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
-                continue
+    #Colour image to dispay contours with.
+    if debug:
+        log.debug("Got " + str(len(contours)) + " inner contours.")
 
-            dx = CENTRE_X - cx
-            dy = CENTRE_Y - cy
+    if (len(contours)  != 1):
+        log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
+    
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area < 25 or area > 700:
+            log.error("BAD INNER AREA: " + str(area) )
+            continue
+        M = cv2.moments(contour)
+        try:
+            cx = int(M['m10']/M['m00'])
+        except:
+            log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+            continue
+        try:
+            cy = int(M['m01']/M['m00'])
+        except:
+            log.error("BAD INNER CENTROID: " + str(M['m10']) + " x " + str(M['m00']))
+            continue
 
-            innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, area: " + str(area))
+        dx = CENTRE_X - cx
+        dy = CENTRE_Y - cy
+
+        innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
+        log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, area: " + str(area))
 
     if (innerAngle == -1000):
-        log.warning("No inner region found, using default contrast for outer.")
+        log.warning("No inner region found.")
 
 
-    if debug:
-        cv2.drawContours(ContourIn, contours, -1, (0,255,0), 3)        
-        writeDebugImage('outputIn.jpg', ContourIn)
-
-    # Find contours
+    # Find outer contours
     contours, _ = cv2.findContours(maskedOuter, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     log.debug("Got " + str(len(contours)) + " outer contours")
-    ContourOut = cv2.cvtColor(maskedOuter, cv2.COLOR_GRAY2BGR)
-    cv2.drawContours(ContourOut, contours, -1, (0,255,0), 3)
+
+    if debug:
+        ContoursInner = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)    
+        cv2.drawContours(ContoursInner, contours, -1, (0,255,0), 3)        
+        writeDebugImage('outputIn.jpg', ContoursInner)
+        ContoursOuter = cv2.cvtColor(maskedOuter, cv2.COLOR_GRAY2BGR)
+        cv2.drawContours(ContoursOuter, contours, -1, (0,255,0), 3)
+        writeDebugImage('outputOut.jpg', ContoursOuter)
 
     cox = 0
     coy = 0
@@ -143,8 +144,7 @@ def getAngle(image,debug):
 
     if innerAngle == -1000 :
         if len(contours) != 1 :
-            log.warning("Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
-            log.warning(">>>>>> Skipping this round - no inner found single outer was bad")
+            log.warning("S>>>>>> kipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
@@ -192,8 +192,6 @@ def getAngle(image,debug):
                 largestAngle = boundingAngles[0]
 
         if ((smallestAngle-1) < innerAngle < (largestAngle+1) or innerAngle == -1000):
-            #log.debug("GOT BOUND CONTOUR ON OUTER! " + str(innerAngle) + " between " + str(smallestAngle) + " and " + str(largestAngle))
-
             M = cv2.moments(contour)
             try:
                 cox = int(M['m10']/M['m00'])
@@ -213,9 +211,6 @@ def getAngle(image,debug):
             dy = CENTRE_Y - coy
 
             outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-            # Draw a rectangle around the contour
-#            cv2.rectangle(contourOut, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
             break
 
     finalAngle = outerAngle
@@ -238,9 +233,8 @@ def getAngle(image,debug):
         log.info("Outer Angle found " + str(outerAngle))
 
     if debug:
-        writeDebugImage('outputOut.jpg', ContourOut)
-        originalImage = cv2.bitwise_or(ContourOut,originalImage)
-        originalImage = cv2.bitwise_or(ContourIn,originalImage)
+        originalImage = cv2.bitwise_or(ContoursOuter,originalImage)
+        originalImage = cv2.bitwise_or(ContoursInner,originalImage)
         cv2.line(originalImage, (CENTRE_X,CENTRE_Y), (cox,coy), (255,50,50), 2)
         cv2.line(originalImage, (cox,coy),(2*cox - CENTRE_X,2*coy - CENTRE_Y), (255,50,255), 2)
         cv2.line(originalImage, (cx-5,cy-5), (cx+5,cy+5), (50,50,255), 2)
