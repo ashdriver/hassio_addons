@@ -162,62 +162,30 @@ def getAngle(image,debug):
             log.warning("No Inner found - using single outer only")
 
     for contour in contours:
-        # Get the bounding box of the contour
-        (x, y, w, h) = cv2.boundingRect(contour)
-    #    print("Bounding box: " + str(x) + " x " + str(y) + " w " + str(w) + " h " + str(h))
+        M = cv2.moments(contour)
+        try:
+            cox = int(M['m10']/M['m00'])
+        except:
+            log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) )
+            continue
 
-        boundingAngles = []
-        dx = CENTRE_X - x
-        dy = CENTRE_Y - (y+h)
-        boundingAngles.append( 90 + np.arctan2(dy, dx) * 180 / np.pi)
+        try:
+            coy = int(M['m01']/M['m00'])
+        except:
+            log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) )
+            continue
+        area = cv2.contourArea(contour)
+        log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) + " Area: " + str(area))
 
-        dx = CENTRE_X - x
-        dy = CENTRE_Y - y
-        boundingAngles.append(90 + np.arctan2(dy, dx) * 180 / np.pi)
-        dx = CENTRE_X - (x+w)
-        dy = CENTRE_Y - y
-        boundingAngles.append( 90 + np.arctan2(dy, dx) * 180 / np.pi)
-        dx = CENTRE_X - (x+w)
-        dy = CENTRE_Y - (y+h)
-        boundingAngles.append( 90 + np.arctan2(dy, dx) * 180 / np.pi)
+        dx = CENTRE_X - cox
+        dy = CENTRE_Y - coy
 
-        for idx, angle in enumerate(boundingAngles):
-            if (angle<0):
-                boundingAngles[idx] = 360 + angle
-
-        boundingAngles.sort()
-
-        smallestAngle = boundingAngles[0]
-        largestAngle = boundingAngles[-1]
-        if (largestAngle - smallestAngle > 180):
-            if innerAngle > 180:
-                largestAngle = smallestAngle + 360
-                smallestAngle = boundingAngles[-1]
-            else:
-                smallestAngle = largestAngle - 360
-                largestAngle = boundingAngles[0]
-
-        if ((smallestAngle-1) < innerAngle < (largestAngle+1) or innerAngle == -1000):
-            M = cv2.moments(contour)
-            try:
-                cox = int(M['m10']/M['m00'])
-            except:
-                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle))
-                continue
-
-            try:
-                coy = int(M['m01']/M['m00'])
-            except:
-                log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) + " between "  + str(smallestAngle) + " <> " + str(largestAngle))
-                continue
-                
-            log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) + " between "  + str(smallestAngle) + " <> " + str(largestAngle))
-
-            dx = CENTRE_X - cox
-            dy = CENTRE_Y - coy
-
-            outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
+        outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
+        if ((outerAngle-2) < innerAngle < (outerAngle+2) or innerAngle == -1000):
             break
+        else:
+            log.warning(">>> Skipping outer contour, out of bounds! Angle: " + str(outerAngle))
+            outerAngle = -1
 
     finalAngle = outerAngle
     if outerAngle == -1:
@@ -234,7 +202,7 @@ def getAngle(image,debug):
         finalAngle = innerAngle
         cox = cx
         coy = cy
-        log.info("No outer Angle found")
+        log.info("No outer Angle found, using inner")
     else:
         log.info("Outer Angle found " + str(outerAngle))
 
