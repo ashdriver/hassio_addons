@@ -92,15 +92,21 @@ def getAngle(image,debug):
     contours, _ = cv2.findContours(maskedInner, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     #Colour image to dispay contours with.
-    if debug:
-        log.debug("Got " + str(len(contours)) + " inner contours.")
-
     if (len(contours)  != 1):
         log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
+        if (len(contours) > 3) :
+            log.warning(">>>>>> Skipping this round - too many inner coutnours.")
+            TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
+            try:
+                os.mkdir(OUTPUT_DIR + "BAD/")
+            except:
+                pass
+            cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)            
+            return
     
     for contour in contours:
         area = cv2.contourArea(contour)
-        if area < 50 or area > 800:
+        if area < 100 or area > 1000:
             log.error(">>> BAD INNER AREA: " + str(area) )
             continue
         M = cv2.moments(contour)
@@ -144,7 +150,7 @@ def getAngle(image,debug):
 
     if innerAngle == -1000 :
         if len(contours) != 1 :
-            log.warning("S>>>>>> kipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
+            log.warning(">>>>>> Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
