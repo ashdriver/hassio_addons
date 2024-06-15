@@ -54,7 +54,7 @@ def getAngle(image,debug):
     pxl = 100 * 800
     averageBright = brightness / pxl
     if (averageBright < 12):
-        log.error("Brightness too low: " + str(averageBright))
+        log.error(">>> Brightness too low: " + str(averageBright))
         return
     logging.debug("Brightness OK: " + str(averageBright))
 
