@@ -48,6 +48,17 @@ def getAngle(image,debug):
     if debug:
         writeDebugImage('inputImage.jpg', image)
 
+    testExposure = image[500:600,700:800].copy()
+    hsv = cv2.cvtColor(testExposure, cv2.COLOR_RGB2HSV)
+    brightness = np.sum(hsv[:,:, 2])
+    pxl = 100 * 800
+    averageBright = brightness / pxl
+    if (averageBright < 12):
+        log.error("Brightness too low: " + str(averageBright))
+        return
+    logging.debug("Brightness OK: " + str(averageBright))
+
+
     grayIn = cv2.cvtColor(originalImage, cv2.COLOR_BGR2GRAY)
     _,otsuFullImage = cv2.threshold(grayIn,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     otsuFullImage = cv2.bitwise_not(otsuFullImage)
@@ -94,8 +105,8 @@ def getAngle(image,debug):
     #Colour image to dispay contours with.
     if (len(contours)  != 1):
         log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
-        if (len(contours) > 1) :
-            log.warning(">>>>>> Skipping this round - too many inner contours (>1)).")
+        if (len(contours) > 2) :
+            log.warning(">>>>>> Skipping this round - too many inner contours (>2)).")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
