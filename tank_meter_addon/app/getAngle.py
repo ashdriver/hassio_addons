@@ -198,7 +198,7 @@ def getAngle(image,debug):
         dy = CENTRE_Y - coy
 
         outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-        if ((outerAngle-2) < innerAngle < (outerAngle+2) or innerAngle == -1000):
+        if ((outerAngle-4) < innerAngle < (outerAngle+4) or innerAngle == -1000):
             break
         else:
             log.warning(">>> Skipping outer contour, out of bounds! Angle: " + str(outerAngle))
