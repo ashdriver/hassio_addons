@@ -8,6 +8,8 @@ import os
 import logging
 import sys
 
+from logging.handlers import WatchedFileHandler
+
 print("Dial analysis app started.")
 
 LOG_LEVEL = os.environ['LOG_LEVEL']
@@ -259,7 +261,7 @@ try:
 except:
     pass
 
-file_handler = logging.handlers.WatchedFileHandler(filename='/config/www/dial.log')
+file_handler = WatchedFileHandler(filename='/config/www/dial.log')
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
 handlers = [file_handler, stdout_handler]
 
