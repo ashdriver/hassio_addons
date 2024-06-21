@@ -259,7 +259,7 @@ try:
 except:
     pass
 
-file_handler = logging.WatchedFileHandler(filename='/config/www/dial.log')
+file_handler = logging.handlers.WatchedFileHandler(filename='/config/www/dial.log')
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
 handlers = [file_handler, stdout_handler]
 
