@@ -290,7 +290,7 @@ client.connect(MQTT_SERVER, MQTT_PORT)
 
 client.on_message=image_ready
 
-autoDiscoverPayload ={  "~": "tankdial","unit_of_measurement":"L","device_class":"water","state_class": "measurement","state_topic":"~/result","name":"Rain Tank Level Dial Angle","unique_id":"raintank_dialangle","device":{"identifiers":["tankdial"],"name":"Rain Tank",}}
+autoDiscoverPayload ={  "~": "tankdial","unit_of_measurement":"degrees","device_class":"None","state_class": "measurement","state_topic":"~/result","name":"Rain Tank Level Dial Angle","unique_id":"raintank_dialangle","device":{"identifiers":["tankdial"],"name":"Rain Tank",}}
 client.publish("homeassistant/sensor/tankdial/result/config", json.dumps(autoDiscoverPayload),  retain=True)
 
 client.subscribe("tankdial/image_ready")
