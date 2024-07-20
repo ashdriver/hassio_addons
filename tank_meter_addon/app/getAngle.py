@@ -114,15 +114,16 @@ def getAngle(image,debug):
                 os.mkdir(OUTPUT_DIR + "BAD/")
             except:
                 pass
-            cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)            
+            cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)
             return
-        
+
     if debug:
         ContoursInner = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)
-        cv2.drawContours(ContoursInner, contours, -1, (0,255,0), 3)        
+        cv2.drawContours(ContoursInner, contours, -1, (0,255,0), 3)
         writeDebugImage('outputIn.jpg', ContoursInner)
 
-    
+    area = 0
+
     for contour in contours:
         area = cv2.contourArea(contour)
         if area < 60 or area > 1000:
@@ -172,7 +173,7 @@ def getAngle(image,debug):
                 os.mkdir(OUTPUT_DIR + "BAD/")
             except:
                 pass
-            cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)            
+            cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)
             return
         else:
             log.warning("No Inner found - using single outer only")
@@ -180,7 +181,7 @@ def getAngle(image,debug):
     for contour in contours:
         if area < 60 or area > 1200:
             log.error(">>> BAD OUTER AREA: " + str(area) )
-            continue        
+            continue
         M = cv2.moments(contour)
         try:
             cox = int(M['m10']/M['m00'])
@@ -217,7 +218,7 @@ def getAngle(image,debug):
             except:
                 pass
             cv2.imwrite(OUTPUT_DIR + "BAD/"  +  TS+".jpg", originalImage)
-            return        
+            return
         finalAngle = innerAngle
         cox = cx
         coy = cy
@@ -231,7 +232,7 @@ def getAngle(image,debug):
         cv2.line(originalImage, (CENTRE_X,CENTRE_Y), (cox,coy), (255,50,50), 2)
         cv2.line(originalImage, (cox,coy),(2*cox - CENTRE_X,2*coy - CENTRE_Y), (255,50,255), 2)
         cv2.line(originalImage, (cx-5,cy-5), (cx+5,cy+5), (50,50,255), 2)
-        cv2.line(originalImage, (cx-5,cy+5), (cx+5,cy-5), (50,50,255), 2)        
+        cv2.line(originalImage, (cx-5,cy+5), (cx+5,cy-5), (50,50,255), 2)
         writeDebugImage('finalAngle.jpg', originalImage)
 
     innerAngle = round(innerAngle,2)
