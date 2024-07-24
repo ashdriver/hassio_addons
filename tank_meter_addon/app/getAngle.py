@@ -209,7 +209,8 @@ def getAngle(image,debug):
 
     finalAngle = outerAngle
     if outerAngle == -1:
-        if innerAngle == -1000:
+        # Ignore inner completely - just adds inaccuracies if no outer.
+        if True or innerAngle == -1000:
             # Means no inner and single outer was bad.
             log.warning(">>>>>> Skipping this round - no inner found single outer was bad")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
