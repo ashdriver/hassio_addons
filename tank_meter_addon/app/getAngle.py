@@ -109,6 +109,11 @@ def getAngle(image,debug):
         log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
         if (len(contours) > 2) :
             log.warning(">>>>>> Skipping this round - too many inner contours (>2)).")
+
+            ContoursInner = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)
+            cv2.drawContours(ContoursInner, contours, -1, (0,255,0), 3)
+            writeDebugImage('outputIn.jpg', ContoursInner)
+
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
