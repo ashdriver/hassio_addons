@@ -2,6 +2,7 @@
 
 export CENTRE_X=$(bashio::config 'centre_x')
 export CENTRE_Y=$(bashio::config 'centre_y')
+export CENTRE_Y=$(bashio::config 'tolerance')
 export MQTT_HOST=$(bashio::config 'MQTT_HOST')
 export MQTT_PORT=$(bashio::config 'MQTT_PORT')
 export MQTT_USERNAME=$(bashio::config 'MQTT_USERNAME')

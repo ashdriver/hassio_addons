@@ -26,6 +26,7 @@ MQTT_PASS = os.environ['MQTT_PASSWORD']
 CENTRE_X = int(os.environ['CENTRE_X'])
 CENTRE_Y = int(os.environ['CENTRE_Y'])
 
+CONFIG_TOLERANCE = os.environ['TOLERANCE']
 
 innerInnerRadius = 110
 outerInnerRadius = 130
@@ -206,7 +207,7 @@ def getAngle(image,debug):
         dy = CENTRE_Y - coy
 
         outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-        if ((outerAngle-4) < innerAngle < (outerAngle+4) or innerAngle == -1000):
+        if ((outerAngle-CONFIG_TOLERANCE) < innerAngle < (outerAngle+CONFIG_TOLERANCE) or innerAngle == -1000):
             break
         else:
             log.warning(">>> Skipping outer contour, out of bounds! Angle: " + str(outerAngle))
