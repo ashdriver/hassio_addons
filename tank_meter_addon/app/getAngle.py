@@ -107,7 +107,7 @@ def getAngle(image,debug):
     #Colour image to dispay contours with.
     if (len(contours)  != 1):
         log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
-        if (len(contours) > 4) :
+        if (len(contours) > 8) :
             log.warning(">>>>>> Skipping this round - too many inner contours (>2)).")
 
             ContoursInner = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)
