@@ -150,7 +150,7 @@ def getAngle(image,debug):
         dy = CENTRE_Y - cy
 
         innerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
-        log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, area: " + str(area))
+        log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, area: " + str(area) + " Angle: " + str(innerAngle))
 
     if (innerAngle == -1000):
         log.warning("No inner region found.")
