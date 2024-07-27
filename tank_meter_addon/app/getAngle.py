@@ -26,7 +26,7 @@ MQTT_PASS = os.environ['MQTT_PASSWORD']
 CENTRE_X = int(os.environ['CENTRE_X'])
 CENTRE_Y = int(os.environ['CENTRE_Y'])
 
-CONFIG_TOLERANCE = os.environ['TOLERANCE']
+CONFIG_TOLERANCE = int(os.environ['TOLERANCE'])
 
 innerInnerRadius = 110
 outerInnerRadius = 130
@@ -185,6 +185,7 @@ def getAngle(image,debug):
             log.warning("No Inner found - using single outer only")
 
     for contour in contours:
+        area = cv2.contourArea(contour)
         if area < 60 or area > 1200:
             log.error(">>> BAD OUTER AREA: " + str(area) )
             continue
@@ -200,7 +201,7 @@ def getAngle(image,debug):
         except:
             log.error("BAD OUTER CENTROID: " + str(M['m10']) + " x " + str(M['m00']) )
             continue
-        area = cv2.contourArea(contour)
+
         log.debug( "Outer Centroid: " + str(cox) + " x " + str(coy) + " Area: " + str(area))
 
         dx = CENTRE_X - cox
