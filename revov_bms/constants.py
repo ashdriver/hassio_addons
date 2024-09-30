@@ -2,8 +2,8 @@
 
 cid2PackNumber          = b"\x39\x30"       # 0x90
 cid2PackAnalogData      = b"\x34\x32"       # 0x42
-cid2SoftwareVersion     = b"\x01\x42\x00\x80"       # 0xC1
-cid2SerialNumber        = b"\x43\x32"       # 0xC2
+cid2SoftwareVersion     = b"\x34\x46" # 0x4F ## b"\x43\x31"       # 0xC1
+cid2SerialNumber        = b"\x35\x31" # 0x51 b"\x43\x32"       # 0xC2
 cid2PackCapacity        = b"\x41\x36"       # 0xA6
 cid2WarnInfo            = b"\x34\x34"       # 0x44
 
