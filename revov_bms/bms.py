@@ -241,10 +241,16 @@ def ha_discovery():
             disc_payload['unit_of_measurement'] = ""
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
-            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Full Capacity"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_i_full_cap"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/i_full_cap"
-            disc_payload['unit_of_measurement'] = "Ah"
+            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Min Cell"
+            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_min_cell"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/min_cell"
+            disc_payload['unit_of_measurement'] = ""
+            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Max Cell"
+            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_max_cell"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/max_cell"
+            disc_payload['unit_of_measurement'] = ""
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Design Capacity"
@@ -718,6 +724,9 @@ def bms_getData(bms,batNumber):
             cell_min_volt = 0
             cell_max_volt = 0
 
+            cell_min=0
+            cell_max=0
+
             for i in range(0,cells):
                 v_cell[(p-1,i)] = int(inc_data[byte_index:byte_index+4],16)
                 byte_index += 4
@@ -732,14 +741,24 @@ def bms_getData(bms,batNumber):
                 else:
                     if v_cell[(p-1,i)] < cell_min_volt:
                         cell_min_volt = v_cell[(p-1,i)]
+                        cell_min = i
                     if v_cell[(p-1,i)] > cell_max_volt:
                         cell_max_volt = v_cell[(p-1,i)]
+                        cell_max = i
 
             #Calculate cells max diff volt
             cell_max_diff_volt = cell_max_volt - cell_min_volt
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/cells_max_diff_calc" ,str(cell_max_diff_volt))
             if print_initial:
                 print("Pack " + str(p).zfill(config['zero_pad_number_packs']) +", Cell Max Diff Volt Calc: " + str(cell_max_diff_volt) + " mV")
+
+            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/cell_min" ,str(cell_min))
+            if print_initial:
+                print("Pack " + str(p).zfill(config['zero_pad_number_packs']) +", Min Cell: " + str(cell_min) )
+
+            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/cell_max" ,str(cell_min))
+            if print_initial:
+                print("Pack " + str(p).zfill(config['zero_pad_number_packs']) +", Max Cell: " + str(cell_max) )
 
             t_mos= (int(inc_data[byte_index:byte_index+4],16))
             if t_mos > 32768:
