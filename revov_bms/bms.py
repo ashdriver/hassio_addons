@@ -1027,14 +1027,6 @@ if success != True:
     print("Error retrieving BMS and pack serial numbers. This is required for HA Discovery. Exiting...")
     quit()
 
-success, data = bms_getData(bms,batNumber=1)
-if success != True:
-      print("Error retrieving BMS analog data: " + data)
-
-time.sleep(5)
-print("EXITING!")
-quit()
-
 while code_running == True:
 
     if bms_connected == True:
