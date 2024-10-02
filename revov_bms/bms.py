@@ -752,11 +752,11 @@ def bms_getData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p).zfill(config['zero_pad_number_packs']) +", Cell Max Diff Volt Calc: " + str(cell_max_diff_volt) + " mV")
 
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/cell_min" ,str(cell_min))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/min_cell" ,str(cell_min))
             if print_initial:
                 print("Pack " + str(p).zfill(config['zero_pad_number_packs']) +", Min Cell: " + str(cell_min) )
 
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/cell_max" ,str(cell_min))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/max_cell" ,str(cell_max))
             if print_initial:
                 print("Pack " + str(p).zfill(config['zero_pad_number_packs']) +", Max Cell: " + str(cell_max) )
 
@@ -818,12 +818,6 @@ def bms_getData(bms,batNumber):
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/i_remain_cap",str(i_remain_cap[p-1]))
             if print_initial:
                 print("Pack " + str(p).zfill(config['zero_pad_number_packs']) + ", I Remaining Capacity: " + str(i_remain_cap[p-1]) + " Ah")
-
-            #i_full_cap.append(int(inc_data[byte_index:byte_index+4],16)*10)
-            #byte_index += 4
-            #client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/i_full_cap",str(i_full_cap[p-1]))
-            #if print_initial:
-                #print("Pack " + str(p).zfill(config['zero_pad_number_packs']) + ", I Full Capacity: " + str(i_full_cap[p-1]) + " mAh")
 
             i_design_cap.append(int(inc_data[byte_index:byte_index+4],16)/100)
             byte_index += 4
