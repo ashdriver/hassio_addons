@@ -25,9 +25,9 @@ if os.path.exists('/data/options.json'):
         config = json.load(file)
         print("Config: " + json.dumps(config))
 
-elif os.path.exists('pace-bms-dev\\config.yaml'):
+elif os.path.exists('revov_bms\\config.yaml'):
     print("Loading config.yaml")
-    with open(r'pace-bms-dev\\config.yaml') as file:
+    with open(r'revov_bms\\config.yaml') as file:
         config = yaml.load(file, Loader=yaml.FullLoader)['options']
 
 else:
@@ -67,14 +67,9 @@ def on_disconnect(client, userdata, rc):
     global mqtt_connected
     mqtt_connected = False
 
-def on_publish(client, userdata, mid):
-    print(f"On publish: userdata:{userdata}, mid:{mid}")
-
-
 client = mqtt.Client("bms")
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
-#client.on_publish = on_publish
 #client.on_message = on_message
 
 client.username_pw_set(username=config['mqtt_user'], password=config['mqtt_password'])
@@ -270,14 +265,7 @@ def ha_discovery():
             disc_payload['unit_of_measurement'] = "%"
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
-
             disc_payload.pop('unit_of_measurement')
-            """
-            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Warnings"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_warnings"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/warnings"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-            """
 
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Protections"
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_protections"
@@ -356,33 +344,12 @@ def ha_discovery():
             disc_payload['payload_off'] = "0"
             client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
-#            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Pack Indicate"
-#            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_pack_indicate"
-#            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/pack_indicate"
-#            disc_payload['payload_on'] = "1"
-#            disc_payload['payload_off'] = "0"
-#            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Reverse"
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_reverse"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/reverse"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
             client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-#            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " AC In"
-#            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_ac_in"
-#            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/ac_in"
-#            disc_payload['payload_on'] = "1"
-#            disc_payload['payload_off'] = "0"
-#            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-#            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Heart"
-#            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_heart"
-#            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/heart"
-#            disc_payload['payload_on'] = "1"
-#            disc_payload['payload_off'] = "0"
-#            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Cell Max Volt Diff"
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_cells_max_diff_calc"
@@ -394,37 +361,6 @@ def ha_discovery():
             disc_payload.pop('payload_on')
             disc_payload.pop('payload_off')
 
-            """
-            disc_payload['name'] = "Pack Remaining Capacity"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_i_remain_cap"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_remain_cap"
-            disc_payload['unit_of_measurement'] = "Ah"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-            disc_payload['name'] = "Pack Full Capacity"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_i_full_cap"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_full_cap"
-            disc_payload['unit_of_measurement'] = "Ah"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-            disc_payload['name'] = "Pack Design Capacity"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_i_design_cap"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_design_cap"
-            disc_payload['unit_of_measurement'] = "Ah"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-            disc_payload['name'] = "Pack State of Charge"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_soc"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_soc"
-            disc_payload['unit_of_measurement'] = "%"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-            disc_payload['name'] = "Pack State of Health"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_soh"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_soh"
-            disc_payload['unit_of_measurement'] = "%"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True) 
-            """
     else:
         print("HA Discovery Disabled")
 
@@ -626,10 +562,10 @@ def bms_request(bms, ver=b"\x32\x32",adr=b"\x30\x31",cid1=b"\x34\x41",cid2=b"\x4
 
     if not(LENID):
         LENID = len(info)
-        print("Length: ", LENID)
+        #print("Length: ", LENID)
         LENID = bytes(format(LENID, '03X'), "ASCII")
 
-    print("LENID: ", LENID)
+    #print("LENID: ", LENID)
 
     if LENID == b'000':
         LCHKSUM = '0'
@@ -637,7 +573,7 @@ def bms_request(bms, ver=b"\x32\x32",adr=b"\x30\x31",cid1=b"\x34\x41",cid2=b"\x4
         LCHKSUM = lchksum_calc(LENID)
         if LCHKSUM == False:
             return(False,"Error calculating LCHKSUM)")
-    print("LCHKSUM: ", LCHKSUM)
+    #print("LCHKSUM: ", LCHKSUM)
     request += bytes(LCHKSUM, "ASCII")
     request += LENID
     request += info
@@ -668,40 +604,6 @@ def bms_request(bms, ver=b"\x32\x32",adr=b"\x30\x31",cid1=b"\x34\x41",cid2=b"\x4
 
     return(success, INFO)
 
-def bms_getPackNumber(bms):
-
-    success, INFO = bms_request(bms,cid2=constants.cid2PackNumber)
-
-    if success == False:
-        return(False,INFO)
-
-    try:
-        packNumber = int(INFO,16)
-    except:
-        print("Error extracting total battery count in pack")
-        return(False,"Error extracting total battery count in pack")
-
-    return(success,packNumber)
-
-def bms_getVersion(comms):
-
-    global bms_version
-
-    success, INFO = bms_request(bms,cid2=constants.cid2SoftwareVersion)
-
-    if success == False:
-        return(False,INFO)
-
-    try:
-
-        bms_version = bytes.fromhex(INFO.decode("ascii")).decode("ASCII")
-        client.publish(config['mqtt_base_topic'] + "/bms_version",bms_version)
-        print("BMS Version: " + bms_version)
-    except:
-        return(False,"Error extracting BMS version")
-
-    return(success,bms_version)
-
 def bms_getSerial(comms):
     global bms_sn
     global pack_sn
@@ -714,7 +616,7 @@ def bms_getSerial(comms):
 
     return(True,bms_sn,pack_sn)
 
-def bms_getAnalogData(bms,batNumber):
+def bms_getData(bms,batNumber):
 
     global print_initial
     global cells
@@ -743,19 +645,6 @@ def bms_getAnalogData(bms,batNumber):
     #prefix: ~250146006118
     #To test set: inc_data = INFO
     #inc_data = b'000A100CF40CF40CF40CF50CF30CF40CF40CF30CF80CF30CF30CF30CF30CF50CF40CF4060B2E0B300B2D0B300B3B0B47FEFCCF406B58096D2700146D60626D606D606D606D6064D1180000100000000000000000000000000000000000000000000000000000000000000000060AAA0AAA0AAA0AAA0AAA0AAA000000000000090000000000006200000000000000006400000000100CF40CF40CF30CF40CF30CF40CF40CF40CF30CF30CF40CF40CF30CF30CF40CF2060B320B2F0B340B2C0B3D0B4AFEF6CF386B65096D2700146D60626D606D606D606D6064CF320000100CF30CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF4060B330B320B2E0B340B410B48FEF9CF3F6B72096D2700146D60626D606D606D606D6064CFCC0000100CF40CF30CF40CF30CF40CF40CF30CF40CF30CF30CF30CF40CF30CF40CF30CF1060B330B2D0B2F0B340B3D0B48FF10CF646B7A096D2700146D60626D606D606D606D6064CFF70000100CF40CF30CF20CF20CF30CF20CF30CF10CF30CF30CF30CF20CF30CF30CF30CF1060B2D0B320B300B310B3C0B49FF11CF296B7F096D2A00136D60626D606D606D606D6064D0030000100CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF50CF40CF40CF40CF3060B310B2E0B310B2E0B400B4AFF1ACF4075580976EE00146D60636D606D606D606D6064CFD20000100CF30CF10CF40CF30CF30CF40CF30CF30CF10CF30CF40CF30CF30CF30CF30CF2060B300B2E0B2F0B330B3B0B42FF07CF636B50096D2400156D60626D606D606D606D6064CFCE0000100CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF40CF3060B2B0B2D0B290B2F0B3B0B4BFF1BCF3F6B7F096D2D00126D60626D606D606D606D6064D1260000100CF40CF40CF40CF40CF40CF40CF40CF60CF30CF40CF40CF40CF40CF40CF40CF3060B2A0B2E0B2D0B2A0B390B43FF24CF406B5F096D2700146D60626D606D606D606D6064D0C70000'
-# 7e 32 32 30 31 34 41 30 30 32 30 41 34 30 31 30   ~22014A0020A4010
-# 30 36 34 31 34 43 37 31 30 30 43 46 39 30 43 46   06414C7100CF90CF
-# 41 30 43 46 41 30 43 46 39 30 43 46 41 30 43 46   A0CFA0CF90CFA0CF
-# 44 30 43 46 45 30 44 30 30 30 43 46 45 30 43 46   D0CFE0D000CFE0CF
-# 42 30 43 46 44 30 44 30 31 30 43 46 46 30 44 30   B0CFD0D010CFF0D0
-# 31 30 43 46 42 30 43 46 45 30 30 44 32 30 30 42   10CFB0CFE00D200B
-# 45 30 30 42 45 30 32 30 30 43 38 30 30 42 45 30   E00BE0200C800BE0
-# 30 30 30 30 44 30 44 30 30 34 36 30 44 32 39 30   0000D0D00460D290
-# 42 32 39 30 42 30 30 32 46 30 30 30 30 30 30 30   B290B002F0000000
-# 30 30 30 30 30 30 30 30 30 30 38 32 33 30 30 30   0000000000823000
-# 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30   0000000000000000
-# 30 44 41 31 45 0d                                 0DA1E.
-
 
 # 7e 32 32 30 31 34 41 30 30 32 30 41 34 30 31 30   ~22014A0020A4 01 0
 # 30 36 34 31 34 43 37 31 30 30 43 46 39 30 43 46   064 14C7 10 0CF9 0CF
@@ -769,91 +658,13 @@ def bms_getAnalogData(bms,batNumber):
 # 30 30 30 30 30 30 30 30 30 30 38 32 33 30 30 30   0 00 00 00 00 08 23 00 0
 # 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30   0 00 00 00 00 00 00 00 0
 # 30 44 41 31 45 0d                                 0 DA1E.
+
       #22 01 4A 00 20 A4
 #0-7  ] 01 00 64 14 C7 10 0C F9
 #8-15 ] 0C FA 0C FA 0C F9 0C FA
 #16-23] 0C FD 0C FE 0D 00 0C FE
 #24-31] 0C FB 0C FD 0D 01 0C FF
 #32-39] 0D 01 0C FB 0C FE 00 D2 00 BE 
-
-
-#            this.str_now[0] = this.str_now[0] + "Cell over voltage protection，";
-#            this.str_now[8] = this.str_now[8] + "Cell under voltage protection，";
-#            this.str_now[8] = this.str_now[8] + "Pack over voltage protection，";
-            #this.str_now[8] = this.str_now[8] + "Pack under voltage protection，";
-            #this.str_now[7] = this.str_now[7] + "cell over voltage alarm，";
-            #this.str_now[7] = this.str_now[7] + "cell under voltage alarm，";
-#            this.str_now[7] = this.str_now[7] + "pack over voltage alarm，";
-            #this.str_now[7] = this.str_now[7] + "pack under voltage alarm，";
-            #this.str_now[7] = this.str_now[7] + "cell voltage difference alarm，";
-#            this.str_now[7] = this.str_now[7] + "Continuous over voltage protection 10 times, no longer released，";
-#            this.str_now[0] = this.str_now[0] + "Temperature difference alarm，";
-#          this.str_now[1] = Form1.yuyan_cn != 1 ? this.str_now[1] + "Is Charging，" : this.str_now[1] + "充电，";
-#          this.str_now[1] = Form1.yuyan_cn != 1 ? this.str_now[1] + "Charging Off，" : this.str_now[1] + "无充电，";
-#          this.str_now[1] = Form1.yuyan_cn != 1 ? this.str_now[1] + "Is Discharging，" : this.str_now[1] + "放电，";
-#          this.str_now[1] = Form1.yuyan_cn != 1 ? this.str_now[1] + "Discharging Off，" : this.str_now[1] + "无放电，";
-#####            this.str_now[8] = this.str_now[8] + "Charging over current protection，";
-#####            this.str_now[8] = this.str_now[8] + "Short circuit protection，";
-#####            this.str_now[8] = this.str_now[8] + "Discharge over current 1 protection，";
-#####            this.str_now[8] = this.str_now[8] + "Discharge over current 2 protection，";
-#            this.str_now[7] = this.str_now[7] + "Charge over current alarm，";
-#            this.str_now[7] = this.str_now[7] + "Discharge over current alarm，";
-#            this.str_now[8] = this.str_now[8] + "Continuous over current 10 times, no longer automatically released，";
-#####            this.str_now[8] = this.str_now[8] + "Reverse connection protection，";
-#####            this.str_now[8] = this.str_now[8] + "Current limit is on，";
-#            this.str_now[8] = this.str_now[8] + "Charging over temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "Charging under temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "Discharge over temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "Discharge under temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "Ambient over temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "Ambient under temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "MOS over temperature protection，";
-#            this.str_now[8] = this.str_now[8] + "MOS under temperature protection，";
-#            this.str_now[7] = this.str_now[7] + "Charge over temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "Charge under temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "Discharge high temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "Discharge under temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "Ambient over temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "Ambient under temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "MOS over temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "MOS under temperature alarm，";
-#            this.str_now[7] = this.str_now[7] + "System power on，";
-#            this.str_now[7] = this.str_now[7] + "Charge FET damage alarm，";
-#            this.str_now[7] = this.str_now[7] + "External SD card failure alarm，";
-#            this.str_now[7] = this.str_now[7] + "SPI communication failure alarm，";
-#            this.str_now[7] = this.str_now[7] + "EEPROM damaged，";
-#            this.str_now[7] = this.str_now[7] + "LED alarm enable，";
-#            this.str_now[7] = this.str_now[7] + "Buzzer alarm enable，";
-#            this.str_now[7] = this.str_now[7] + "Low battery alarm，";
-#            this.str_now[8] = this.str_now[8] + "MOS over temperature protection，";
-#            this.str_now[7] = this.str_now[7] + "Heating film damaged，";
-#            this.str_now[9] = this.str_now[9] + "Current Limiting board damaged，";
-#            this.str_now[9] = this.str_now[9] + "Sampling failure，";
-#            this.str_now[9] = this.str_now[9] + "Battery failure，";
-#            this.str_now[9] = this.str_now[9] + "NTC failure，";
-#            this.str_now[9] = this.str_now[9] + "Charge MOS failure，";
-#            this.str_now[9] = this.str_now[9] + "Discharge MOS failure，";
-#####          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Discharge MOS on，" : this.str_now[4] + "放电MOS-导通，";
-#####          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Discharge MOS off，" : this.str_now[4] + "放电MOS-关断，";
-#####          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Charge MOS On，" : this.str_now[4] + "充电MOS-导通，";
-#####          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Charge MOS Off，" : this.str_now[4] + "充电MOS-关断，";
-#        this.str_now[4] = ((int) this.now_data_S[9] & 4) != 4 ? (Form1.yuyan_cn != 1 ? this.str_now[4] + "Discharge MOS OK，" : this.str_now[4] + "放电管正常，") : (Form1.yuyan_cn != 1 ? this.str_now[4] + "Discharge MOS failure，" : this.str_now[4] + "放电管损坏，");
-#        this.str_now[4] = ((int) this.now_data_S[9] & 8) != 8 ? (Form1.yuyan_cn != 1 ? this.str_now[4] + "Charge MOS OK，" : this.str_now[4] + "充电管正常，") : (Form1.yuyan_cn != 1 ? this.str_now[4] + "Charge MOS failure，" : this.str_now[4] + "充电管损坏，");
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Not limited to flow，" : this.str_now[4] + "不限流，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Current limit 20A，" : this.str_now[4] + "限流20A，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Current limit 10A，" : this.str_now[4] + "限流10A，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Current limit 25A，" : this.str_now[4] + "限流25A，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Heating film is on，" : this.str_now[4] + "加热膜开，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Heating film is Off，" : this.str_now[4] + "加热膜关，";
-#        this.str_now[4] = ((int) this.now_data_S[9] & 128) != 128 ? (Form1.yuyan_cn != 1 ? this.str_now[4] + "Constant current state，" : this.str_now[4] + "恒流状态，") : (Form1.yuyan_cn != 1 ? this.str_now[4] + "Non-constant current state，" : this.str_now[4] + "非恒流状态，");
-#        this.str_now[4] = ((int) this.now_data_S[8] & 1) != 1 ? (Form1.yuyan_cn != 1 ? this.str_now[4] + "No fully state，" : this.str_now[4] + "无Fully状态，") : (Form1.yuyan_cn != 1 ? this.str_now[4] + "Have fully state，" : this.str_now[4] + "有Fully状态，");
-#        this.str_now[4] = ((int) this.now_data_S[8] & 2) != 2 ? (Form1.yuyan_cn != 1 ? this.str_now[4] + "No electricity ACin，" : this.str_now[4] + "无市电ACin，") : (Form1.yuyan_cn != 1 ? this.str_now[4] + "have electricity ACin，" : this.str_now[4] + "有市电ACin，");
-#        this.str_now[4] = ((int) this.now_data_S[8] & 4) != 4 ? (Form1.yuyan_cn != 1 ? this.str_now[4] + "Pack is not powered，" : this.str_now[4] + "Pack未供电，") : (Form1.yuyan_cn != 1 ? this.str_now[4] + "Pack powered，" : this.str_now[4] + "Pack供电，");
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "LED alarm On，" : this.str_now[4] + "LED报警-开，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "LED alarm Off，" : this.str_now[4] + "LED报警-关，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Buzzer On，" : this.str_now[4] + "蜂鸣器-开，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "Buzzer Off，" : this.str_now[4] + "蜂鸣器-关，";
-#          this.str_now[4] = Form1.yuyan_cn != 1 ? this.str_now[4] + "AFE chip failure，" : this.str_now[4] + "AFE芯片故障，";
 
 
     try:
@@ -1199,181 +1010,6 @@ def bms_getAnalogData(bms,batNumber):
 
     return True,True
 
-def bms_getWarnInfo(bms):
-
-    byte_index = 2
-    packsW = 1
-    warnings = ""
-
-    success, inc_data = bms_request(bms,cid2=constants.cid2WarnInfo,info=b'FF')
-
-    if success == False:
-        return(False,inc_data)
-
-    #inc_data = b'000210000000000000000000000000000000000600000000000000000000000E0000000000001110000000000000000000000000000000000600000000000000000000000E00000000000000'
-
-
-    try:
-
-        packsW = int(inc_data[byte_index:byte_index+2],16)
-        if print_initial:
-            print("Packs for warnings: " + str(packs))
-        byte_index += 2
-
-        for p in range(1,packs+1):
-
-            cellsW = int(inc_data[byte_index:byte_index+2],16)
-            byte_index += 2
-
-            for c in range(1,cellsW+1):
-
-                if inc_data[byte_index:byte_index+2] != b'00':
-                    warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
-                    warnings += "cell " + str(c) + " " + warn + ", "
-                byte_index += 2
-
-            tempsW = int(inc_data[byte_index:byte_index+2],16)
-            byte_index += 2
-
-            for t in range(1,tempsW+1):
-
-                if inc_data[byte_index:byte_index+2] != b'00':
-                    warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
-                    warnings += "temp " + str(t) + " " + warn + ", "
-                byte_index += 2
-
-            if inc_data[byte_index:byte_index+2] != b'00':
-                warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
-                warnings += "charge current " + warn + ", "
-            byte_index += 2
-
-            if inc_data[byte_index:byte_index+2] != b'00':
-                warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
-                warnings += "total voltage " + warn + ", "
-            byte_index += 2
-
-            if inc_data[byte_index:byte_index+2] != b'00':
-                warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
-                warnings += "discharge current " + warn + ", "
-            byte_index += 2
-
-            protectState1 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            if protectState1 > 0:
-                warnings += "Protection State 1: "
-                for x in range(0,8):
-                    if (protectState1 & (1<<x)):
-                        warnings += constants.protectState1[x+1] + " | "
-                warnings = warnings.rstrip("| ")
-                warnings += ", "
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/prot_short_circuit",str(protectState1>>6 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/prot_discharge_current",str(protectState1>>5 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/prot_charge_current",str(protectState1>>4 & 1))
-            byte_index += 2
-
-            protectState2 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            if protectState2 > 0:
-                warnings += "Protection State 2: "
-                for x in range(0,8):
-                    if (protectState2 & (1<<x)):
-                        warnings += constants.protectState2[x+1] + " | "
-                warnings = warnings.rstrip("| ")
-                warnings += ", "
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/fully",str(protectState2>>7 & 1))
-            byte_index += 2
-
-            # instructionState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            # if instructionState > 0:
-            #     warnings += "Instruction State: "
-            #     for x in range(0,8):
-            #         if (instructionState & (1<<x)):
-            #              warnings += constants.instructionState[x+1] + " | "
-            #     warnings = warnings.rstrip("| ")
-            #     warnings += ", "
-            # byte_index += 2
-
-            instructionState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/current_limit",str(instructionState>>0 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/charge_fet",str(instructionState>>1 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/discharge_fet",str(instructionState>>2 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/pack_indicate",str(instructionState>>3 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/reverse",str(instructionState>>4 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/ac_in",str(instructionState>>5 & 1))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/heart",str(instructionState>>7 & 1))
-            byte_index += 2
-
-            controlState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            if controlState > 0:
-                warnings += "Control State: "
-                for x in range(0,8):
-                    if (controlState & (1<<x)):
-                        warnings += constants.controlState[x+1] + " | "
-                warnings = warnings.rstrip("| ")
-                warnings += ", "
-            byte_index += 2
-
-            faultState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            if faultState > 0:
-                warnings += "Fault State: "
-                for x in range(0,8):
-                    if (faultState & (1<<x)):
-                        warnings += constants.faultState[x+1] + " | "
-                warnings = warnings.rstrip("| ")
-                warnings += ", "
-            byte_index += 2
-
-            balanceState1 = '{0:08b}'.format(int(inc_data[byte_index:byte_index+2],16))
-            byte_index += 2
-
-            balanceState2 = '{0:08b}'.format(int(inc_data[byte_index:byte_index+2],16))
-            byte_index += 2
-
-            warnState1 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            if warnState1 > 0:
-                warnings += "Warning State 1: "
-                for x in range(0,8):
-                    if (warnState1 & (1<<x)):
-                        warnings += constants.warnState1[x+1] + " | "
-                warnings = warnings.rstrip("| ")
-                warnings += ", "
-            byte_index += 2
-
-            warnState2 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            if warnState2 > 0:
-                warnings += "Warning State 2: "
-                for x in range(0,8):
-                    if (warnState2 & (1<<x)):
-                        warnings += constants.warnState2[x+1] + " | "
-                warnings = warnings.rstrip("| ")
-                warnings += ", "
-            byte_index += 2
-
-            warnings = warnings.rstrip(", ")
-
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/warnings",warnings)
-            if print_initial:
-                print("Pack " + str(p).zfill(config['zero_pad_number_packs']) + ", warnings: " + warnings)
-
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/balancing1",balanceState1)
-            if print_initial:
-                print("Pack " + str(p).zfill(config['zero_pad_number_packs']) + ", balancing1: " + balanceState1)
-
-            client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/balancing2",balanceState2)
-            if print_initial:
-                print("Pack " + str(p).zfill(config['zero_pad_number_packs']) + ", balancing2: " + balanceState2)
-
-            warnings = ""
-
-            #Test for non signed value (matching cell count), to skip possible INFOFLAG present in data
-            if (byte_index < len(inc_data)) and (cellsW != int(inc_data[byte_index:byte_index+2],16)):
-                byte_index += 2
-
-    except Exception as e:
-        print("Error parsing BMS warning data: ", str(e))
-        return False, "Error parsing BMS warning data: " + str(e)
-
-    return True,True
-
-
 print("Connecting to BMS...")
 bms,bms_connected = bms_connect(config['bms_ip'],config['bms_port'])
 
@@ -1391,7 +1027,7 @@ if success != True:
     print("Error retrieving BMS and pack serial numbers. This is required for HA Discovery. Exiting...")
     quit()
 
-success, data = bms_getAnalogData(bms,batNumber=1)
+success, data = bms_getData(bms,batNumber=1)
 if success != True:
       print("Error retrieving BMS analog data: " + data)
 
@@ -1404,7 +1040,7 @@ while code_running == True:
     if bms_connected == True:
         if mqtt_connected == True:
 
-            success, data = bms_getAnalogData(bms,batNumber=255)
+            success, data = bms_getData(bms,batNumber=255)
             if success != True:
                 print("Error retrieving BMS analog data: " + data)
             time.sleep(scan_interval)
