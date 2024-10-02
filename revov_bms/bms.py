@@ -741,10 +741,10 @@ def bms_getData(bms,batNumber):
                 else:
                     if v_cell[(p-1,i)] < cell_min_volt:
                         cell_min_volt = v_cell[(p-1,i)]
-                        cell_min = i
+                        cell_min = i+1
                     if v_cell[(p-1,i)] > cell_max_volt:
                         cell_max_volt = v_cell[(p-1,i)]
-                        cell_max = i
+                        cell_max = i+1
 
             #Calculate cells max diff volt
             cell_max_diff_volt = cell_max_volt - cell_min_volt
