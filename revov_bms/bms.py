@@ -959,6 +959,11 @@ def bms_getData(bms,batNumber):
             if (states[p-1,9] >> 3) & 1 != 0:
                 state += "Charge MOS OK. "
 
+            if (states[p-1,9] >> 0) & 1 == 0:
+                protections += "Discharge MOS OFF. "
+            if (states[p-1,9] >> 1) & 1 == 0:
+                protections += "Charge MOS OFF. "
+
             c_l = (states[p-1,9] & 0x30) >> 4
             if c_l == 0:
                state += "No Current Limit. "
