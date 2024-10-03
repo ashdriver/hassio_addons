@@ -795,7 +795,7 @@ def bms_getData(bms,batNumber):
             byte_index += 4
             if i_pack[p-1] >= 32768:
                 i_pack[p-1] = -1*(65535 - i_pack[p-1])
-            i_pack[p-1] = i_pack[p-1]/1000
+            i_pack[p-1] = i_pack[p-1]/100
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/i_pack",str(i_pack[p-1]))
             if print_initial:
                 print("Pack " + str(p).zfill(config['zero_pad_number_packs']) + ", I Pack: " + str(i_pack[p-1]) + " A")
