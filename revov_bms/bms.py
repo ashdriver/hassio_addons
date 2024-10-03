@@ -12,7 +12,7 @@ import json
 import atexit
 import sys
 import constants
-import numpy as np
+import psutil
 
 print("Starting up...")
 
@@ -1041,7 +1041,7 @@ if success != True:
     quit()
 
 while code_running == True:
-
+    psutil.Process().memory_info().rss / (1024 * 1024)
     if bms_connected == True:
         if mqtt_connected == True:
 
