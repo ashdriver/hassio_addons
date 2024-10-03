@@ -1,6 +1,6 @@
 name: "BMS Tian/Revov"
 description: "Tian/Revov BMS Interface"
-version: "1.2.7"
+version: "1.2.8"
 slug: "bms_revov"
 init: false
 arch:
