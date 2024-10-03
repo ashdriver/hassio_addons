@@ -7,12 +7,10 @@ import yaml
 import os
 import json
 import serial
-import io
 import json
 import atexit
 import sys
 import constants
-import psutil
 
 print("Starting up...")
 
@@ -634,7 +632,6 @@ def bms_getData(bms,batNumber):
     i_remain_cap = []
     i_design_cap = []
     cycles = []
-    i_full_cap = []
     soc = []
     soh = []
 
@@ -1041,7 +1038,7 @@ if success != True:
     quit()
 
 while code_running == True:
-    psutil.Process().memory_info().rss / (1024 * 1024)
+
     if bms_connected == True:
         if mqtt_connected == True:
 
