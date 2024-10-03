@@ -871,6 +871,10 @@ def bms_getData(bms,batNumber):
                 alarms += "Temperature Difference. "
             if (states[p-1,0] >> 7) & 1 == 1:
                 state += "In Sleep State. "
+            if (states[p-1,3] >> 0) & 1 == 1:
+                state += "Charging. "
+            if (states[p-1,3] >> 1) & 1 == 1:
+                state += "Discharging. "
             if (states[p-1,3] >> 2) & 1 == 1:
                 protections += "Charging Over Current. "
             if (states[p-1,3] >> 3) & 1 == 1:
