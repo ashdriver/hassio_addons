@@ -721,8 +721,8 @@ def bms_getData(bms,batNumber):
             cell_min_volt = 0
             cell_max_volt = 0
 
-            cell_min=0
-            cell_max=0
+            cell_min=1
+            cell_max=1
 
             for i in range(0,cells):
                 v_cell[(p-1,i)] = int(inc_data[byte_index:byte_index+4],16)
