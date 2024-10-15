@@ -703,7 +703,8 @@ def bms_getData(bms,batNumber):
 
             cells = int(inc_data[byte_index:byte_index+2],16)
 
-            print("cells: " +str(cells))
+            if print_initial:
+                print("cells: " +str(cells))
 
             #Possible remove this next test as were now testing for the INFOFLAG at the end
             if p > 1:
