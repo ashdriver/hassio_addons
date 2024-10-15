@@ -12,6 +12,8 @@ import atexit
 import sys
 import constants
 
+from datetime import datetime
+
 print("Starting up...")
 
 config = {}
@@ -669,7 +671,11 @@ def bms_getData(bms,batNumber):
 #24-31] 0C FB 0C FD 0D 01 0C FF
 #32-39] 0D 01 0C FB 0C FE 00 D2 00 BE 
 
-
+    if debug_output > 1:
+        now = datetime.now()
+        # dd/mm/YY H:M:S
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        print("Timestamp:", dt_string)
     try:
 
         packs = int(inc_data[byte_index:byte_index+2],16)
