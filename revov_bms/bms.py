@@ -1000,6 +1000,7 @@ def bms_getData(bms,batNumber):
 
 
             balanceState = '{0:016b}'.format(int(states[p-1,18]*256 + states[p-1,19]))
+            balanceState = int(balanceState[::-1],2)
 
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/states",state)
             if print_initial:
