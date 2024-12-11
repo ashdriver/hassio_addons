@@ -56,7 +56,7 @@ def getAngle(image,debug):
     brightness = np.sum(hsv[:,:, 2])
     pxl = 100 * 800
     averageBright = brightness / pxl
-    if (averageBright < 12):
+    if (averageBright < 10):
         log.error(">>> Brightness too low: " + str(averageBright))
         return
     logging.debug("Brightness OK: " + str(averageBright))
