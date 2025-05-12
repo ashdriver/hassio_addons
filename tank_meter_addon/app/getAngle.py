@@ -129,7 +129,7 @@ def getAngle(image,debug):
         writeDebugImage('outputIn.jpg', ContoursInner)
 
     area = 0
-
+    inner_count = len(contours)
     for contour in contours:
         area = cv2.contourArea(contour)
         if area < 60 or area > 1000:
@@ -170,7 +170,7 @@ def getAngle(image,debug):
     coy = 0
 
     outerAngle = -1
-
+    outer_count = len(contours)
     if innerAngle == -1000 :
         if len(contours) != 1 :
             log.warning(">>>>>> Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
@@ -230,7 +230,7 @@ def getAngle(image,debug):
         finalAngle = innerAngle
         cox = cx
         coy = cy
-        log.info("No outer Angle found, using inner")
+        log.error("No outer Angle found, using inner (inner count " + str(inner_count) + ")")
     else:
         log.info("Outer Angle found " + str(outerAngle))
 
@@ -247,7 +247,7 @@ def getAngle(image,debug):
     outerAngle = round(outerAngle,2)
     finalAngle = round(finalAngle,2)
 
-    log.info(">>>>>>>>>>>>>> INNER:" + str(innerAngle) + " OUTER:" + str(outerAngle) + " FINAL:" + str(finalAngle))
+    log.error(">>>>>>>>>>>>>> INNER:" + str(innerAngle) + " (" + str(inner_count) + ") OUTER:" + str(outerAngle) + "(" + str(outer_count) + ") FINAL:" + str(finalAngle))
 
     (rc,_) = client.publish("tankdial/result", str(finalAngle), qos=1)
 
