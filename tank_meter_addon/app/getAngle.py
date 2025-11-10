@@ -135,7 +135,7 @@ def getAngle(image,debug):
     for contour in contours:
         area = cv2.contourArea(contour)
         if area < 60 or area > 1000:
-            log.error(">>> BAD INNER AREA: " + str(area) )
+            log.warning(">>> BAD INNER AREA: " + str(area) )
             continue
         if maxarea > area:
             log.debug(">>> SKIPPING AREA: " + str(area) + " MAX AREA IS: " + str(maxarea))
@@ -160,7 +160,7 @@ def getAngle(image,debug):
         log.debug("Inner Centroid: " + str(cx) + " x " + str(cy) + ". Got an inner region, area: " + str(area) + " Angle: " + str(innerAngle))
 
     if (innerAngle == -1000):
-        log.warning("No inner region found.")
+        log.error("No inner region found.")
 
 
     # Find outer contours
@@ -179,7 +179,7 @@ def getAngle(image,debug):
     outer_count = len(contours)
     if innerAngle == -1000 :
         if len(contours) != 1 :
-            log.warning(">>>>>> Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
+            log.error(">>>>>> Skipping this round - no inner found and no single outer found (" + str(len(contours)) + ")")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
@@ -193,7 +193,7 @@ def getAngle(image,debug):
     for contour in contours:
         area = cv2.contourArea(contour)
         if area < 60 or area > 1200:
-            log.error(">>> BAD OUTER AREA: " + str(area) )
+            log.warning(">>> BAD OUTER AREA: " + str(area) )
             continue
         M = cv2.moments(contour)
         try:
@@ -225,7 +225,7 @@ def getAngle(image,debug):
         # Ignore inner completely - just adds inaccuracies if no outer.
         if True or innerAngle == -1000:
             # Means no inner and single outer was bad.
-            log.warning(">>>>>> Skipping this round - no inner found single outer was bad")
+            log.error(">>>>>> Skipping this round - no inner found single outer was bad")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
             try:
                 os.mkdir(OUTPUT_DIR + "BAD/")
