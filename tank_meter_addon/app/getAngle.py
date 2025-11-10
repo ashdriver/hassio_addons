@@ -108,7 +108,8 @@ def getAngle(image,debug):
     #Colour image to dispay contours with.
     if (len(contours)  != 1):
         log.warning("GOT " + str(len(contours)) + " INNER CONTOURS!")
-        if (len(contours) > 8) :
+
+        if (len(contours) > 8) and False:
             log.warning(">>>>>> Skipping this round - too many inner contours (>2)).")
 
             ContoursInner = cv2.cvtColor(maskedInner, cv2.COLOR_GRAY2BGR)
@@ -129,12 +130,17 @@ def getAngle(image,debug):
         writeDebugImage('outputIn.jpg', ContoursInner)
 
     area = 0
+    maxarea = 0
     inner_count = len(contours)
     for contour in contours:
         area = cv2.contourArea(contour)
         if area < 60 or area > 1000:
             log.error(">>> BAD INNER AREA: " + str(area) )
             continue
+        if maxarea > area:
+            log.debug(">>> SKIPPING AREA: " + str(area) + " MAX AREA IS: " + str(maxarea))
+            continue
+        maxarea = area
         M = cv2.moments(contour)
         try:
             cx = int(M['m10']/M['m00'])
