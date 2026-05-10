@@ -28,8 +28,8 @@ CENTRE_Y = int(os.environ['CENTRE_Y'])
 
 CONFIG_TOLERANCE = int(os.environ['TOLERANCE'])
 
-innerInnerRadius = 110
-outerInnerRadius = 130
+innerInnerRadius = 120
+outerInnerRadius = 140
 
 innerOuterRadius = 180
 outerOuterRadius = 200
