@@ -28,11 +28,11 @@ CENTRE_Y = int(os.environ['CENTRE_Y'])
 
 CONFIG_TOLERANCE = int(os.environ['TOLERANCE'])
 
-innerInnerRadius = 120
-outerInnerRadius = 140
+innerInnerRadius = 125
+outerInnerRadius = 145
 
-innerOuterRadius = 180
-outerOuterRadius = 200
+innerOuterRadius = 205
+outerOuterRadius = 225
 
 OUTPUT_DIR = "/config/www/dialDebugImages/"
 
