@@ -1,6 +1,6 @@
 name: "Tank Dial"
 description: "Read analog rotary dial"
-version: "3.1.3"
+version: "3.1.4"
 slug: "tank_dial"
 init: false
 apparmor: false
@@ -20,7 +20,7 @@ options:
   MQTT_PORT: 1883
   MQTT_USERNAME: "mqtt_user"
   MQTT_PASSWORD: "mqtt_pass"
-  Log_Level: DEBUG
+  Log_level: DEBUG
 schema:
   centre_x: int
   centre_y: int
