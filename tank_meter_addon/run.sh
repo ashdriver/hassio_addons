@@ -9,4 +9,8 @@ export MQTT_USERNAME=$(bashio::config 'MQTT_USERNAME')
 export MQTT_PASSWORD=$(bashio::config 'MQTT_PASSWORD')
 export LOG_LEVEL=$(bashio::config 'Log_level')
 
+if [ -z "$LOG_LEVEL" ]; then
+	export LOG_LEVEL=$(bashio::config 'Log_Level')
+fi
+
 python /app/getAngle.py

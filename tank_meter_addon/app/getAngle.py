@@ -213,6 +213,7 @@ def getAngle(image,debug):
         dx = CENTRE_X - cox
         dy = CENTRE_Y - coy
 
+# Check tolerance between inner and outer - tolerance is allowable difference in angle between inner and outer - if they are too different, then likely one is wrong and we should ignore the outer (as inner is more reliable). If no inner, then outer must be correct as only 1 allowed.
         outerAngle = (90+360 + (np.arctan2(dy, dx) * 180 / np.pi)) % 360
         if ((outerAngle-CONFIG_TOLERANCE) < innerAngle < (outerAngle+CONFIG_TOLERANCE) or innerAngle == -1000):
             break
