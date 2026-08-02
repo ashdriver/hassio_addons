@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a Roku SoundBridge",
+        "data": {
+          "method": "How should we find it?"
+        }
+      },
+      "scan": {
+        "title": "Scan your network",
+        "description": "We'll probe each address in this range for an open SoundBridge shell on port 4444. This can take a little while on larger subnets.",
+        "data": {
+          "cidr": "Network range (CIDR)"
+        }
+      },
+      "pick": {
+        "title": "Select your SoundBridge",
+        "data": {
+          "host": "Device"
+        }
+      },
+      "manual": {
+        "title": "Enter SoundBridge address",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port"
+        }
+      },
+      "ssdp_confirm": {
+        "title": "SoundBridge discovered",
+        "description": "Found \"{name}\" at {host}. Add it to Home Assistant?"
+      }
+    },
+    "error": {
+      "no_devices_found": "No SoundBridge units were found on that network range.",
+      "subnet_too_large": "That range is too large to scan (max /20).",
+      "cannot_connect": "Couldn't connect, or the device at that address didn't identify itself as a SoundBridge."
+    },
+    "abort": {
+      "already_configured": "This SoundBridge is already configured."
+    }
+  }
+}

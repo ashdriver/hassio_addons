@@ -1,0 +1,65 @@
+send_text:
+  name: Send text
+  description: Render text on a SoundBridge's VFD display.
+  fields:
+    device_id:
+      name: Device
+      description: The SoundBridge unit(s) to send to.
+      required: true
+      selector:
+        device:
+          integration: soundbridge
+          multiple: true
+    message:
+      name: Message
+      description: The text to display.
+      required: true
+      example: "Front door opened"
+      selector:
+        text:
+    x:
+      name: X position
+      description: X coordinate, or "c" to center. Ignored if scroll is enabled.
+      default: "c"
+      selector:
+        text:
+    y:
+      name: Y position
+      description: Y coordinate, or "c" to center. Ignored if scroll is enabled.
+      default: "c"
+      selector:
+        text:
+    font:
+      name: Font
+      description: Font index (see `sketch> font list` on the device shell).
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 20
+          mode: box
+    clear:
+      name: Clear first
+      description: Clear the display before drawing.
+      default: true
+      selector:
+        boolean:
+    scroll:
+      name: Scroll
+      description: Use a scrolling marquee instead of static text. Useful for messages wider than the display.
+      default: false
+      selector:
+        boolean:
+
+clear:
+  name: Clear display
+  description: Clear a SoundBridge's display and stop any running marquee.
+  fields:
+    device_id:
+      name: Device
+      description: The SoundBridge unit(s) to clear.
+      required: true
+      selector:
+        device:
+          integration: soundbridge
+          multiple: true
