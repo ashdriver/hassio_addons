@@ -204,7 +204,7 @@ class SoundBridgeClient:
             try:
                 await self._ensure_in_sketch(timeout)
                 assert self._writer is not None and self._reader is not None
-                self._writer.write(cmd.encode() + b"\r\n")
+                self._writer.write(cmd.encode("latin-1", errors="replace") + b"\r\n")
                 await self._writer.drain()
                 await _read_until(self._reader, (SKETCH_PROMPT,), timeout)
                 return
