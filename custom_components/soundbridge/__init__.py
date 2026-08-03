@@ -33,9 +33,12 @@ from .const import (
     CONF_CLEAR,
     CONF_FONT,
     CONF_SCROLL,
+    CONF_SCROLL_INTERVAL,
+    CONF_SCROLL_REPEAT,
     CONF_X,
     CONF_Y,
     DEFAULT_FONT,
+    DEFAULT_SCROLL_REPEAT,
     DEFAULT_X,
     DEFAULT_Y,
     DOMAIN,
@@ -58,6 +61,10 @@ SEND_TEXT_SCHEMA = vol.Schema(
         vol.Optional(CONF_FONT, default=DEFAULT_FONT): vol.Coerce(int),
         vol.Optional(CONF_CLEAR, default=True): cv.boolean,
         vol.Optional(CONF_SCROLL, default=False): cv.boolean,
+        vol.Optional(CONF_SCROLL_REPEAT, default=DEFAULT_SCROLL_REPEAT): cv.boolean,
+        vol.Optional(CONF_SCROLL_INTERVAL): vol.All(
+            vol.Coerce(float), vol.Range(min=1)
+        ),
         vol.Optional(CONF_DURATION): vol.Coerce(float),
     }
 )
@@ -96,6 +103,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                     font=call.data.get(CONF_FONT),
                     clear=call.data[CONF_CLEAR],
                     scroll=call.data[CONF_SCROLL],
+                    scroll_repeat=call.data[CONF_SCROLL_REPEAT],
+                    scroll_interval=call.data.get(CONF_SCROLL_INTERVAL),
                     duration=call.data.get(CONF_DURATION),
                 )
             except SoundBridgeError as err:

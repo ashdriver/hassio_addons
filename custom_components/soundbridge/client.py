@@ -25,7 +25,18 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-from .const import DEFAULT_CMD_TIMEOUT, DEFAULT_FONT, DEFAULT_PORT, DEFAULT_SCAN_TIMEOUT
+from .const import (
+    DEFAULT_CMD_TIMEOUT,
+    DEFAULT_FONT,
+    DEFAULT_PORT,
+    DEFAULT_SCAN_TIMEOUT,
+    DEFAULT_SCROLL_REPEAT,
+    DISPLAY_WIDTH_PX,
+    FONT_HEIGHT_PX,
+    GLYPH_ASPECT,
+    MARQUEE_SPEED_PX_PER_SEC,
+    MIN_SCROLL_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,6 +93,19 @@ async def _read_until(
             return buf
 
 
+def estimate_scroll_seconds(text: str, font: int | None) -> float:
+    """Estimate how long one marquee pass takes, in seconds.
+
+    The text enters from one edge and has to fully exit the other, so it
+    travels the display width plus its own width. Only ever an estimate -
+    callers can pass an explicit interval instead (see MARQUEE_SPEED_PX_PER_SEC).
+    """
+    height = FONT_HEIGHT_PX.get(font if font is not None else DEFAULT_FONT, 16)
+    text_px = len(text) * height * GLYPH_ASPECT
+    travel_px = DISPLAY_WIDTH_PX + text_px
+    return max(travel_px / MARQUEE_SPEED_PX_PER_SEC, MIN_SCROLL_INTERVAL)
+
+
 def sanitize_text(text: str) -> str:
     """Make arbitrary user text safe to embed in a quoted sketch command.
 
@@ -110,6 +134,7 @@ class SoundBridgeClient:
         self._writer: asyncio.StreamWriter | None = None
         self._lock = asyncio.Lock()
         self._release_handle: asyncio.TimerHandle | None = None
+        self._scroll_task: asyncio.Task | None = None
 
     # -- one-shot probing (used by discovery / config flow) -----------------
 
@@ -201,6 +226,46 @@ class SoundBridgeClient:
             self._release_handle.cancel()
             self._release_handle = None
 
+    # -- marquee looping -------------------------------------------------------
+
+    def _stop_scroll_loop(self) -> None:
+        """Stop re-issuing the marquee. Does not stop the marquee itself -
+        callers that need the display quiet send `marquee -stop` too."""
+        if self._scroll_task is not None:
+            self._scroll_task.cancel()
+            self._scroll_task = None
+
+    def _start_scroll_loop(self, cmd: str, interval: float) -> None:
+        self._stop_scroll_loop()
+        self._scroll_task = asyncio.create_task(self._scroll_loop(cmd, interval))
+
+    async def _scroll_loop(self, cmd: str, interval: float) -> None:
+        """Re-issue the marquee every `interval` seconds so it loops.
+
+        Errors are logged rather than raised: the service call that started
+        this returned long ago, so there is no caller left to receive them,
+        and one failed restart just means the scrolling stops.
+        """
+        while True:
+            try:
+                await asyncio.sleep(interval)
+                async with self._lock:
+                    if self._scroll_task is not asyncio.current_task():
+                        return  # superseded by a newer message
+                    # Stop first so a pass that is somehow still running
+                    # can't overlap with the one we're about to start.
+                    await self._run_sketch_command('marquee -stop ""', DEFAULT_CMD_TIMEOUT)
+                    await self._run_sketch_command(cmd, DEFAULT_CMD_TIMEOUT)
+            except asyncio.CancelledError:
+                raise
+            except (SoundBridgeError, OSError) as err:
+                _LOGGER.warning(
+                    "SoundBridge %s: could not restart marquee, scrolling stops: %s",
+                    self._host,
+                    err,
+                )
+                return
+
     # -- public drawing API ---------------------------------------------------
 
     async def async_send_text(
@@ -212,6 +277,8 @@ class SoundBridgeClient:
         clear: bool = True,
         scroll: bool = False,
         duration: float | None = None,
+        scroll_repeat: bool = DEFAULT_SCROLL_REPEAT,
+        scroll_interval: float | None = None,
         timeout: float = DEFAULT_CMD_TIMEOUT,
     ) -> None:
         """Render text on the display via the sketch sub-shell.
@@ -221,11 +288,17 @@ class SoundBridgeClient:
         released back to the device's normal UI after that many seconds
         via async_release(). If omitted, the message stays up until the
         next send_text()/clear() call or an explicit async_release().
+
+        The device's marquee makes a single pass and stops, so with
+        `scroll_repeat` (the default) the command is re-issued every
+        `scroll_interval` seconds to keep it going. If no interval is
+        given one is estimated from the text length and font height.
         """
         safe_text = sanitize_text(text)
 
         async with self._lock:
             self._cancel_pending_release()
+            self._stop_scroll_loop()
 
             if clear:
                 await self._run_sketch_command("clear", timeout)
@@ -233,7 +306,18 @@ class SoundBridgeClient:
                 await self._run_sketch_command(f"font {int(font)}", timeout)
 
             if scroll:
-                await self._run_sketch_command(f'marquee -start "{safe_text}"', timeout)
+                marquee = f'marquee -start "{safe_text}"'
+                await self._run_sketch_command(marquee, timeout)
+                if scroll_repeat:
+                    interval = (
+                        scroll_interval
+                        if scroll_interval is not None
+                        else estimate_scroll_seconds(safe_text, font)
+                    )
+                    _LOGGER.debug(
+                        "Looping marquee on %s every %.1fs", self._host, interval
+                    )
+                    self._start_scroll_loop(marquee, interval)
             else:
                 await self._run_sketch_command(f'text {x} {y} "{safe_text}"', timeout)
 
@@ -251,6 +335,7 @@ class SoundBridgeClient:
         """
         async with self._lock:
             self._cancel_pending_release()
+            self._stop_scroll_loop()
             await self._run_sketch_command('marquee -stop ""', timeout)
             await self._run_sketch_command("clear", timeout)
 
@@ -258,6 +343,7 @@ class SoundBridgeClient:
         """Hand the display back to the device's own UI and disconnect."""
         async with self._lock:
             self._cancel_pending_release()
+            self._stop_scroll_loop()
             if self._writer is None:
                 return
             try:

@@ -50,6 +50,30 @@ send_text:
       default: false
       selector:
         boolean:
+    scroll_repeat:
+      name: Repeat scrolling
+      description: >-
+        Keep the marquee scrolling indefinitely. The device's marquee makes a
+        single pass and then stops, so the integration re-issues it to loop.
+        Only applies when Scroll is enabled.
+      default: true
+      selector:
+        boolean:
+    scroll_interval:
+      name: Scroll repeat interval (seconds)
+      description: >-
+        How long one pass takes, i.e. how often to restart the marquee. Leave
+        unset to estimate it from the message length and font. Set it manually
+        if looping stutters: too low restarts the text mid-pass (it jumps back),
+        too high leaves a gap between passes.
+      selector:
+        number:
+          min: 1
+          max: 120
+          step: 0.5
+          mode: box
+          unit_of_measurement: seconds
+
     duration:
       name: Duration (seconds)
       description: >-
