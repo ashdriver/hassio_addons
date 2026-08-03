@@ -1,11 +1,20 @@
 """The Roku SoundBridge Display integration.
 
-Exposes two services (see services.yaml for the full field list):
+Exposes three services (see services.yaml for the full field list):
   soundbridge.send_text  - render text on the display (static or scrolling)
   soundbridge.clear      - clear the display / stop any running marquee
+  soundbridge.release    - hand control back to the device's own UI
 
-Both take a `device_id` target so multiple SoundBridge units can be
+All three take a `device_id` target so multiple SoundBridge units can be
 configured and addressed independently.
+
+IMPORTANT: while a message is being shown (i.e. between send_text and the
+next release/clear/timeout), the connection to the device is held open
+inside its `sketch` sub-shell. This is required for the text to actually
+stay on screen (confirmed empirically - see client.py for details), but it
+also means the device's own UI (clock, now-playing, menus) is frozen for
+that whole period. Use `duration` on send_text to auto-release rather than
+holding the display indefinitely, unless that's genuinely what you want.
 """
 from __future__ import annotations
 
@@ -14,7 +23,7 @@ import logging
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PORT, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
@@ -36,6 +45,9 @@ _LOGGER = logging.getLogger(__name__)
 
 SERVICE_SEND_TEXT = "send_text"
 SERVICE_CLEAR = "clear"
+SERVICE_RELEASE = "release"
+
+CONF_DURATION = "duration"
 
 SEND_TEXT_SCHEMA = vol.Schema(
     {
@@ -46,10 +58,13 @@ SEND_TEXT_SCHEMA = vol.Schema(
         vol.Optional(CONF_FONT, default=DEFAULT_FONT): vol.Coerce(int),
         vol.Optional(CONF_CLEAR, default=True): cv.boolean,
         vol.Optional(CONF_SCROLL, default=False): cv.boolean,
+        vol.Optional(CONF_DURATION): vol.Coerce(float),
     }
 )
 
-CLEAR_SCHEMA = vol.Schema({vol.Required("device_id"): vol.All(cv.ensure_list, [cv.string])})
+DEVICE_TARGET_SCHEMA = vol.Schema(
+    {vol.Required("device_id"): vol.All(cv.ensure_list, [cv.string])}
+)
 
 
 def _client_for_device(hass: HomeAssistant, device_id: str) -> SoundBridgeClient:
@@ -81,6 +96,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                     font=call.data.get(CONF_FONT),
                     clear=call.data[CONF_CLEAR],
                     scroll=call.data[CONF_SCROLL],
+                    duration=call.data.get(CONF_DURATION),
                 )
             except SoundBridgeError as err:
                 raise HomeAssistantError(f"SoundBridge send_text failed: {err}") from err
@@ -93,12 +109,26 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             except SoundBridgeError as err:
                 raise HomeAssistantError(f"SoundBridge clear failed: {err}") from err
 
+    async def handle_release(call: ServiceCall) -> None:
+        for device_id in call.data["device_id"]:
+            client = _client_for_device(hass, device_id)
+            try:
+                await client.async_release()
+            except SoundBridgeError as err:
+                raise HomeAssistantError(f"SoundBridge release failed: {err}") from err
+
     if not hass.services.has_service(DOMAIN, SERVICE_SEND_TEXT):
         hass.services.async_register(
             DOMAIN, SERVICE_SEND_TEXT, handle_send_text, schema=SEND_TEXT_SCHEMA
         )
     if not hass.services.has_service(DOMAIN, SERVICE_CLEAR):
-        hass.services.async_register(DOMAIN, SERVICE_CLEAR, handle_clear, schema=CLEAR_SCHEMA)
+        hass.services.async_register(
+            DOMAIN, SERVICE_CLEAR, handle_clear, schema=DEVICE_TARGET_SCHEMA
+        )
+    if not hass.services.has_service(DOMAIN, SERVICE_RELEASE):
+        hass.services.async_register(
+            DOMAIN, SERVICE_RELEASE, handle_release, schema=DEVICE_TARGET_SCHEMA
+        )
 
     return True
 
@@ -120,10 +150,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=entry.title,
     )
 
+    async def _release_on_stop(_event) -> None:
+        await client.async_release()
+
+    entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _release_on_stop)
+    )
+
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+    """Unload a config entry: hand the display back and disconnect."""
+    client: SoundBridgeClient | None = hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+    if client is not None:
+        await client.async_release()
     return True

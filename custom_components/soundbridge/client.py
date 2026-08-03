@@ -1,15 +1,23 @@
-"""Low-level async client for the Roku SoundBridge debug shell (port 4444).
+"""Async client for the Roku SoundBridge debug shell (port 4444).
 
 The SoundBridge shell is a simple line-oriented prompt ("SoundBridge> ").
 Typing "sketch" drops you into a drawing sub-shell ("sketch> ") with
 commands like `clear`, `text x y "..."`, `marquee -start "..."`, etc.
-See: SoundBridgeRCPSpecification2-4.pdf and the interactive `sketch ?`
-help text for the full command set.
 
-This client opens a fresh connection for each operation. The device is a
-single embedded unit from ~2005-2008; there's no evidence it supports more
-than one shell session cleanly, so we keep sessions short-lived rather than
-holding a persistent connection open.
+IMPORTANT BEHAVIOR (confirmed empirically, not documented anywhere):
+leaving the `sketch` sub-shell (typing `quit`) immediately hands the
+display back to the SoundBridge's own firmware UI (clock / now-playing
+screen), which then overwrites whatever `sketch` drew. Simply closing the
+TCP connection while still inside `sketch` does NOT do this - the drawn
+content stays up. So: to make text persist on screen, we have to hold a
+connection open *inside* the sketch sub-shell indefinitely, and only issue
+`quit` when we actually want to hand control back.
+
+This means, while a message is being held, the device's own UI (clock,
+now-playing, menus) is frozen and won't update - `sketch` and the normal
+firmware UI can't both drive the screen at once. Callers should generally
+use a bounded `duration` when sending a message rather than holding it
+forever, unless a persistent display is genuinely what's wanted.
 """
 from __future__ import annotations
 
@@ -87,20 +95,32 @@ def sanitize_text(text: str) -> str:
 
 
 class SoundBridgeClient:
-    """Helper for probing and sending text to a SoundBridge display."""
+    """Holds a persistent shell connection to a SoundBridge display.
+
+    A single connection is opened lazily on first use and kept inside the
+    `sketch` sub-shell across calls, so drawn content survives between
+    send_text() calls. Call async_release() to hand control back to the
+    device's own UI (clock/now-playing) and close the connection.
+    """
 
     def __init__(self, host: str, port: int = DEFAULT_PORT) -> None:
         self._host = host
         self._port = port
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
+        self._lock = asyncio.Lock()
+        self._release_handle: asyncio.TimerHandle | None = None
+
+    # -- one-shot probing (used by discovery / config flow) -----------------
 
     async def async_probe(
         self, timeout: float = DEFAULT_SCAN_TIMEOUT
     ) -> SoundBridgeInfo | None:
         """Connect and confirm this is actually a SoundBridge shell.
 
-        Returns SoundBridgeInfo on success, or None if the host doesn't
-        look like a SoundBridge (used during subnet scanning, where a
-        "no match" is a normal, expected outcome rather than an error).
+        Uses a throwaway connection, independent of the persistent one
+        used for drawing - safe to call at any time, including while a
+        message is currently being held on screen.
         """
         try:
             reader, writer = await asyncio.wait_for(
@@ -117,8 +137,6 @@ class SoundBridgeClient:
             text = resp.decode(errors="replace")
             if "soundbridge" not in text.lower():
                 return None
-            # First non-empty line of the response is typically the
-            # version string itself.
             version_line = next(
                 (
                     line.strip()
@@ -137,6 +155,54 @@ class SoundBridgeClient:
             except Exception:  # noqa: BLE001 - best-effort cleanup
                 pass
 
+    # -- persistent connection management ------------------------------------
+
+    async def _ensure_in_sketch(self, timeout: float) -> None:
+        """Make sure we have a live connection sitting at the sketch> prompt."""
+        if self._writer is not None and not self._writer.is_closing():
+            return  # assume still good; a failed write below will tell us otherwise
+
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(self._host, self._port), timeout=timeout
+        )
+        await _read_until(reader, (SHELL_PROMPT,), timeout)
+        writer.write(b"sketch\r\n")
+        await writer.drain()
+        await _read_until(reader, (SKETCH_PROMPT,), timeout)
+        self._reader, self._writer = reader, writer
+
+    async def _run_sketch_command(self, cmd: str, timeout: float) -> None:
+        """Send one sketch command over the held-open connection, with one
+        automatic reconnect-and-retry if the connection turned out to be
+        stale (e.g. device rebooted, or something else closed it)."""
+        for attempt in (1, 2):
+            try:
+                await self._ensure_in_sketch(timeout)
+                assert self._writer is not None and self._reader is not None
+                self._writer.write(cmd.encode() + b"\r\n")
+                await self._writer.drain()
+                await _read_until(self._reader, (SKETCH_PROMPT,), timeout)
+                return
+            except (SoundBridgeError, OSError):
+                await self._reset_connection()
+                if attempt == 2:
+                    raise
+
+    async def _reset_connection(self) -> None:
+        """Drop our idea of the connection without trying to be polite
+        about it (used when the connection is already presumed broken)."""
+        if self._writer is not None:
+            self._writer.close()
+        self._reader = None
+        self._writer = None
+
+    def _cancel_pending_release(self) -> None:
+        if self._release_handle is not None:
+            self._release_handle.cancel()
+            self._release_handle = None
+
+    # -- public drawing API ---------------------------------------------------
+
     async def async_send_text(
         self,
         text: str,
@@ -145,74 +211,61 @@ class SoundBridgeClient:
         font: int | None = DEFAULT_FONT,
         clear: bool = True,
         scroll: bool = False,
+        duration: float | None = None,
         timeout: float = DEFAULT_CMD_TIMEOUT,
     ) -> None:
-        """Render text on the display via the sketch sub-shell."""
+        """Render text on the display via the sketch sub-shell.
+
+        The connection is left open afterwards so the text stays visible.
+        If `duration` is given (seconds), the display is automatically
+        released back to the device's normal UI after that many seconds
+        via async_release(). If omitted, the message stays up until the
+        next send_text()/clear() call or an explicit async_release().
+        """
         safe_text = sanitize_text(text)
 
-        reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(self._host, self._port), timeout=timeout
-        )
-        try:
-            await _read_until(reader, (SHELL_PROMPT,), timeout)
-
-            writer.write(b"sketch\r\n")
-            await writer.drain()
-            await _read_until(reader, (SKETCH_PROMPT,), timeout)
+        async with self._lock:
+            self._cancel_pending_release()
 
             if clear:
-                writer.write(b"clear\r\n")
-                await writer.drain()
-                await _read_until(reader, (SKETCH_PROMPT,), timeout)
-
+                await self._run_sketch_command("clear", timeout)
             if font is not None:
-                writer.write(f"font {int(font)}\r\n".encode())
-                await writer.drain()
-                await _read_until(reader, (SKETCH_PROMPT,), timeout)
+                await self._run_sketch_command(f"font {int(font)}", timeout)
 
             if scroll:
-                cmd = f'marquee -start "{safe_text}"\r\n'
+                await self._run_sketch_command(f'marquee -start "{safe_text}"', timeout)
             else:
-                cmd = f'text {x} {y} "{safe_text}"\r\n'
-            writer.write(cmd.encode())
-            await writer.drain()
-            await _read_until(reader, (SKETCH_PROMPT,), timeout)
+                await self._run_sketch_command(f'text {x} {y} "{safe_text}"', timeout)
 
-            writer.write(b"quit\r\n")
-            await writer.drain()
-            await _read_until(reader, (SHELL_PROMPT,), timeout)
-        finally:
-            writer.close()
-            try:
-                await writer.wait_closed()
-            except Exception:  # noqa: BLE001 - best-effort cleanup
-                pass
+        if duration is not None:
+            loop = asyncio.get_running_loop()
+            self._release_handle = loop.call_later(
+                duration, lambda: asyncio.ensure_future(self.async_release())
+            )
 
     async def async_clear(self, timeout: float = DEFAULT_CMD_TIMEOUT) -> None:
-        """Clear the display (also stops any running marquee)."""
-        reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(self._host, self._port), timeout=timeout
-        )
-        try:
-            await _read_until(reader, (SHELL_PROMPT,), timeout)
-            writer.write(b"sketch\r\n")
-            await writer.drain()
-            await _read_until(reader, (SKETCH_PROMPT,), timeout)
+        """Clear the display (also stops any running marquee).
 
-            writer.write(b'marquee -stop ""\r\n')
-            await writer.drain()
-            await _read_until(reader, (SKETCH_PROMPT,), timeout)
+        Leaves the connection held open in sketch mode, same as
+        async_send_text - call async_release() to hand control back.
+        """
+        async with self._lock:
+            self._cancel_pending_release()
+            await self._run_sketch_command('marquee -stop ""', timeout)
+            await self._run_sketch_command("clear", timeout)
 
-            writer.write(b"clear\r\n")
-            await writer.drain()
-            await _read_until(reader, (SKETCH_PROMPT,), timeout)
-
-            writer.write(b"quit\r\n")
-            await writer.drain()
-            await _read_until(reader, (SHELL_PROMPT,), timeout)
-        finally:
-            writer.close()
+    async def async_release(self, timeout: float = DEFAULT_CMD_TIMEOUT) -> None:
+        """Hand the display back to the device's own UI and disconnect."""
+        async with self._lock:
+            self._cancel_pending_release()
+            if self._writer is None:
+                return
             try:
-                await writer.wait_closed()
-            except Exception:  # noqa: BLE001
-                pass
+                self._writer.write(b"quit\r\n")
+                await self._writer.drain()
+                if self._reader is not None:
+                    await _read_until(self._reader, (SHELL_PROMPT,), timeout)
+            except (SoundBridgeError, OSError):
+                pass  # best-effort - we're closing the socket regardless
+            finally:
+                await self._reset_connection()

@@ -50,14 +50,40 @@ send_text:
       default: false
       selector:
         boolean:
+    duration:
+      name: Duration (seconds)
+      description: >-
+        Automatically hand the display back to the device's own UI (clock/now-playing)
+        after this many seconds. If left unset, the message stays up - and the
+        device's own UI stays frozen - until you call soundbridge.clear,
+        soundbridge.release, or send another message.
+      selector:
+        number:
+          min: 1
+          max: 3600
+          mode: box
+          unit_of_measurement: seconds
 
 clear:
   name: Clear display
-  description: Clear a SoundBridge's display and stop any running marquee.
+  description: Clear a SoundBridge's display and stop any running marquee. Leaves the connection held open - call release to hand control back to the device's own UI.
   fields:
     device_id:
       name: Device
       description: The SoundBridge unit(s) to clear.
+      required: true
+      selector:
+        device:
+          integration: soundbridge
+          multiple: true
+
+release:
+  name: Release display
+  description: Hand control of the display back to the device's own UI (clock/now-playing) and disconnect.
+  fields:
+    device_id:
+      name: Device
+      description: The SoundBridge unit(s) to release.
       required: true
       selector:
         device:
