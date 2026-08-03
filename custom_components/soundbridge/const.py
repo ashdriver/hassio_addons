@@ -30,7 +30,7 @@ DEFAULT_SCROLL_REPEAT = True
 DISPLAY_WIDTH_PX = 280           # M1001 VFD is 280x16
 FONT_HEIGHT_PX = {1: 8, 2: 16, 3: 32, 10: 16, 11: 16, 12: 16, 14: 16}
 # Proportional fonts, so this is a rough mean advance per character.
-GLYPH_ASPECT = 0.55
+GLYPH_ASPECT = 0.35
 # Scroll rate of the firmware's marquee. This is an estimate - if looping
 # restarts early (text jumps back mid-pass) lower it; if there is a pause
 # with the display sitting idle between passes, raise it. Or just set
