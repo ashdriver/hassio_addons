@@ -168,6 +168,53 @@ class SoundBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="manual", data_schema=schema, errors=errors
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Point an existing entry at a new address.
+
+        Deliberately does NOT touch unique_id, even though a manually-added
+        entry originally derived it from the address (see _async_finish).
+        The unique_id anchors the device registry entry, the media player's
+        entity_id, and therefore any Music Assistant player built on top of
+        it - changing it here would silently orphan all three and force the
+        player to be re-selected. It is an opaque identifier, so letting it
+        keep an address the device no longer has is the lesser evil.
+        """
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        assert entry is not None
+
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            port = user_input.get(CONF_PORT, DEFAULT_PORT)
+            client = SoundBridgeClient(host, port)
+            if await client.async_probe(timeout=3.0) is None:
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_update_reload_and_abort(
+                    entry,
+                    title=f"SoundBridge ({host})",
+                    data={**entry.data, CONF_HOST: host, CONF_PORT: port},
+                    reason="reconfigure_successful",
+                )
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_HOST, default=entry.data.get(CONF_HOST)): str,
+                vol.Optional(
+                    CONF_PORT, default=entry.data.get(CONF_PORT, DEFAULT_PORT)
+                ): int,
+            }
+        )
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"current": entry.data.get(CONF_HOST, "?")},
+        )
+
     async def _async_finish(self, host: str, port: int) -> FlowResult:
         await self.async_set_unique_id(f"{host}:{port}")
         self._abort_if_unique_id_configured()

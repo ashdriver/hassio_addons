@@ -23,7 +23,12 @@ import logging
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_PORT,
+    EVENT_HOMEASSISTANT_STOP,
+    Platform,
+)
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
@@ -45,6 +50,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+PLATFORMS = [Platform.MEDIA_PLAYER]
 
 SERVICE_SEND_TEXT = "send_text"
 SERVICE_CLEAR = "clear"
@@ -166,12 +173,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _release_on_stop)
     )
 
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry: hand the display back and disconnect."""
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if not unloaded:
+        return False
+
     client: SoundBridgeClient | None = hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     if client is not None:
         await client.async_release()
+        await client.async_close_rcp()
     return True

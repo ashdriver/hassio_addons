@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass
 
 from .const import (
@@ -42,6 +43,18 @@ _LOGGER = logging.getLogger(__name__)
 
 SHELL_PROMPT = b"SoundBridge>"
 SKETCH_PROMPT = b"sketch>"
+RCP_READY = b"roku: ready"
+
+# The RCP sub-shell prints no prompt. Every reply line is "<Command>: <payload>",
+# and a reply ends either with a terminal payload token or - for single-line
+# getters like "GetTransportState: Play" - simply by going quiet.
+RCP_TERMINAL = frozenset({"OK", "ListResultEnd"})
+RCP_ERROR_RE = re.compile(
+    r"^(Error\w*|ParameterError|UnknownCommand|GenericError|TransactionFailed)$"
+)
+# How long the stream must be silent before a reply with no terminal token
+# is considered complete.
+RCP_IDLE_GAP = 0.4
 
 
 class SoundBridgeError(Exception):
@@ -54,6 +67,15 @@ class SoundBridgeConnectionError(SoundBridgeError):
 
 class SoundBridgeTimeoutError(SoundBridgeError):
     """Device did not respond in time."""
+
+
+class SoundBridgeCommandError(SoundBridgeError):
+    """The device accepted the line but rejected the command itself.
+
+    RCP reports failure with a payload token (ErrorBadArgs, ParameterError,
+    UnknownCommand, ...) rather than by dropping the connection, so this can
+    be raised while the transport is perfectly healthy.
+    """
 
 
 @dataclass
@@ -91,6 +113,56 @@ async def _read_until(
         buf += chunk
         if any(marker in buf for marker in markers):
             return buf
+
+
+def _rcp_payload(line: str) -> str:
+    """Strip the echoed command name from an RCP reply line.
+
+    "GetTransportState: Play" -> "Play". Lines without a colon come back
+    unchanged, which is what we want for the rare unprefixed reply.
+    """
+    return line.split(":", 1)[1].strip() if ":" in line else line.strip()
+
+
+async def _read_rcp_response(
+    reader: asyncio.StreamReader, timeout: float
+) -> list[str]:
+    """Read one RCP reply and return its payload lines.
+
+    Ends on a terminal token (OK / ListResultEnd / an error), or on a short
+    silence for the single-line getters that send no terminator at all.
+    """
+    buf = b""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while True:
+        remaining = deadline - loop.time()
+        if remaining <= 0:
+            raise SoundBridgeTimeoutError(f"RCP timed out; got: {buf[-200:]!r}")
+        # Only allow the short idle cutoff once something has arrived,
+        # otherwise a slow device would look like a finished reply.
+        wait = min(RCP_IDLE_GAP, remaining) if buf else remaining
+        try:
+            chunk = await asyncio.wait_for(reader.read(1024), timeout=wait)
+        except asyncio.TimeoutError:
+            if buf:
+                break
+            raise SoundBridgeTimeoutError("RCP timed out with no reply") from None
+        if not chunk:
+            raise SoundBridgeConnectionError("Connection closed during RCP reply")
+        buf += chunk
+        lines = [ln for ln in buf.decode(errors="replace").splitlines() if ln.strip()]
+        if lines and (
+            _rcp_payload(lines[-1]) in RCP_TERMINAL
+            or RCP_ERROR_RE.match(_rcp_payload(lines[-1]))
+        ):
+            break
+
+    return [
+        _rcp_payload(ln)
+        for ln in buf.decode(errors="replace").splitlines()
+        if ln.strip()
+    ]
 
 
 def estimate_scroll_seconds(text: str, font: int | None) -> float:
@@ -135,6 +207,13 @@ class SoundBridgeClient:
         self._lock = asyncio.Lock()
         self._release_handle: asyncio.TimerHandle | None = None
         self._scroll_task: asyncio.Task | None = None
+        # RCP runs on its own connection: the drawing connection is parked
+        # inside the `sketch` sub-shell and cannot issue RCP commands. The
+        # device accepts both simultaneously (verified against firmware
+        # 3.0.52), so playback and the display do not contend.
+        self._rcp_reader: asyncio.StreamReader | None = None
+        self._rcp_writer: asyncio.StreamWriter | None = None
+        self._rcp_lock = asyncio.Lock()
 
     # -- one-shot probing (used by discovery / config flow) -----------------
 
@@ -265,6 +344,69 @@ class SoundBridgeClient:
                     err,
                 )
                 return
+
+    # -- RCP (playback / transport) -------------------------------------------
+
+    async def _ensure_in_rcp(self, timeout: float) -> None:
+        """Make sure the RCP connection is live and inside the rcp sub-shell."""
+        if self._rcp_writer is not None and not self._rcp_writer.is_closing():
+            return
+
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(self._host, self._port), timeout=timeout
+        )
+        await _read_until(reader, (SHELL_PROMPT,), timeout)
+        writer.write(b"rcp\r\n")
+        await writer.drain()
+        await _read_until(reader, (RCP_READY,), timeout)
+        self._rcp_reader, self._rcp_writer = reader, writer
+
+    async def _reset_rcp(self) -> None:
+        if self._rcp_writer is not None:
+            self._rcp_writer.close()
+        self._rcp_reader = None
+        self._rcp_writer = None
+
+    async def async_rcp(
+        self, cmd: str, timeout: float = DEFAULT_CMD_TIMEOUT
+    ) -> list[str]:
+        """Run one RCP command and return its payload lines.
+
+        Reconnects and retries once if the held connection turned out to be
+        stale. Raises SoundBridgeCommandError if the device reports an error
+        token, so callers do not have to inspect every reply themselves.
+        """
+        async with self._rcp_lock:
+            for attempt in (1, 2):
+                try:
+                    await self._ensure_in_rcp(timeout)
+                    assert self._rcp_writer is not None
+                    assert self._rcp_reader is not None
+                    self._rcp_writer.write(cmd.encode() + b"\r\n")
+                    await self._rcp_writer.drain()
+                    lines = await _read_rcp_response(self._rcp_reader, timeout)
+                    break
+                except (SoundBridgeError, OSError):
+                    await self._reset_rcp()
+                    if attempt == 2:
+                        raise
+
+        _LOGGER.debug("rcp %r -> %r", cmd, lines)
+        if lines and RCP_ERROR_RE.match(lines[-1]):
+            raise SoundBridgeCommandError(f"RCP {cmd!r} failed: {lines[-1]}")
+        return lines
+
+    async def async_rcp_value(
+        self, cmd: str, timeout: float = DEFAULT_CMD_TIMEOUT
+    ) -> str | None:
+        """Run an RCP getter and return its single value, or None if empty."""
+        lines = [ln for ln in await self.async_rcp(cmd, timeout) if ln not in RCP_TERMINAL]
+        return lines[0] if lines else None
+
+    async def async_close_rcp(self) -> None:
+        """Close the RCP connection (playback on the device is unaffected)."""
+        async with self._rcp_lock:
+            await self._reset_rcp()
 
     # -- public drawing API ---------------------------------------------------
 

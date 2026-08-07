@@ -30,6 +30,14 @@
       "ssdp_confirm": {
         "title": "SoundBridge discovered",
         "description": "Found \"{name}\" at {host}. Add it to Home Assistant?"
+      },
+      "reconfigure": {
+        "title": "Change SoundBridge address",
+        "description": "Currently set to {current}. Enter the new address - the device keeps its existing entities, so anything pointing at it (such as a Music Assistant player) keeps working.",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port"
+        }
       }
     },
     "error": {
@@ -38,7 +46,8 @@
       "cannot_connect": "Couldn't connect, or the device at that address didn't identify itself as a SoundBridge."
     },
     "abort": {
-      "already_configured": "This SoundBridge is already configured."
+      "already_configured": "This SoundBridge is already configured.",
+      "reconfigure_successful": "The SoundBridge address was updated."
     }
   }
 }
