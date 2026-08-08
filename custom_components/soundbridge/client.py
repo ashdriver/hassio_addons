@@ -215,6 +215,11 @@ class SoundBridgeClient:
         self._rcp_writer: asyncio.StreamWriter | None = None
         self._rcp_lock = asyncio.Lock()
 
+    @property
+    def host(self) -> str:
+        """Address of the device, for logging and diagnostics."""
+        return self._host
+
     # -- one-shot probing (used by discovery / config flow) -----------------
 
     async def async_probe(

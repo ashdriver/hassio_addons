@@ -16,6 +16,18 @@ DEFAULT_X = "c"
 DEFAULT_Y = "c"
 DEFAULT_FONT = 3
 
+# While the device is powered on and stopped, its firmware puts up a
+# "Playback Stopped - Press Play to start" marquee and repaints it ~37 times
+# a second, overwriting anything drawn through the sketch sub-shell. Dropping
+# to standby silences the firmware completely (measured: 0 repaints/sec) and
+# hands the display back, so the two are mutually exclusive on this hardware.
+AUTO_STANDBY_ON_STOP = True
+
+# How long the transport must stay stopped before we drop to standby. A queue
+# transition can report Stop for a moment, and standby-ing there would kill
+# playback mid-queue - so this needs to comfortably outlast a track change.
+AUTO_STANDBY_DELAY = 30.0
+
 CONF_SCROLL_REPEAT = "scroll_repeat"
 CONF_SCROLL_INTERVAL = "scroll_interval"
 

@@ -15,6 +15,7 @@ default for HA players); this hardware predates FLAC streaming support.
 from __future__ import annotations
 
 import logging
+import time
 
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
@@ -32,9 +33,14 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import SoundBridgeClient, SoundBridgeError
-from .const import DOMAIN
+from .const import AUTO_STANDBY_DELAY, AUTO_STANDBY_ON_STOP, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+# Port 1 on loopback: nothing can ever be listening, so the device powers on
+# and then immediately fails the fetch. See async_turn_on for why this is the
+# only available wake.
+WAKE_URL = "http://127.0.0.1:1/wake"
 
 # GetTransportState -> HA state. "Standby" is the device's soft-off.
 _TRANSPORT_STATES = {
@@ -77,6 +83,7 @@ class SoundBridgeMediaPlayer(MediaPlayerEntity):
 
     def __init__(self, client: SoundBridgeClient, entry: ConfigEntry) -> None:
         self._client = client
+        self._stopped_since: float | None = None
         self._attr_unique_id = entry.unique_id or (
             f"{entry.data[CONF_HOST]}:{entry.data[CONF_PORT]}"
         )
@@ -101,10 +108,43 @@ class SoundBridgeMediaPlayer(MediaPlayerEntity):
             if volume is not None and volume.isdigit():
                 self._attr_volume_level = int(volume) / 100
             self._attr_available = True
+
+            await self._async_auto_standby()
         except SoundBridgeError as err:
             if self._attr_available:
                 _LOGGER.warning("SoundBridge unavailable: %s", err)
             self._attr_available = False
+
+    async def _async_auto_standby(self) -> None:
+        """Drop to standby once playback has been stopped for a while.
+
+        Powered on and stopped, the firmware repaints its own marquee over
+        anything the display services draw. Standby silences it. We wait out
+        AUTO_STANDBY_DELAY first because a queue transition can report Stop
+        for a moment, and standing by there would end playback mid-queue.
+        """
+        if not AUTO_STANDBY_ON_STOP:
+            return
+
+        if self._attr_state is not MediaPlayerState.IDLE:
+            self._stopped_since = None  # playing, paused, or already off
+            return
+
+        now = time.monotonic()
+        if self._stopped_since is None:
+            self._stopped_since = now
+            return
+        if now - self._stopped_since < AUTO_STANDBY_DELAY:
+            return
+
+        self._stopped_since = None
+        _LOGGER.debug(
+            "Stopped for %.0fs - dropping %s to standby to free the display",
+            AUTO_STANDBY_DELAY,
+            self._client.host,
+        )
+        await self._client.async_rcp("SetPowerState standby")
+        self._attr_state = MediaPlayerState.OFF
 
     # -- playback -------------------------------------------------------------
 
@@ -147,7 +187,17 @@ class SoundBridgeMediaPlayer(MediaPlayerEntity):
         await self._client.async_rcp("Next")
 
     async def async_turn_on(self) -> None:
-        await self._client.async_rcp("SetPowerState on")
+        """Wake the device.
+
+        `SetPowerState` only accepts `standby` - there is no "on" value, and
+        every spelling of it returns ParameterError. The only way back out of
+        standby over RCP is a playback command, which replies `PowerStateOn`
+        before it does anything else. So we start a station pointed at an
+        unroutable address: the device powers on, fails to fetch, and stops,
+        which wakes it without making a sound or disturbing the queue.
+        """
+        await self._client.async_rcp(f"PlayStation {WAKE_URL}")
+        await self._client.async_rcp("Stop")
 
     async def async_turn_off(self) -> None:
         await self._client.async_rcp("SetPowerState standby")
