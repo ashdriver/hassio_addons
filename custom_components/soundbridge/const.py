@@ -21,7 +21,14 @@ DEFAULT_FONT = 3
 # a second, overwriting anything drawn through the sketch sub-shell. Dropping
 # to standby silences the firmware completely (measured: 0 repaints/sec) and
 # hands the display back, so the two are mutually exclusive on this hardware.
-AUTO_STANDBY_ON_STOP = True
+#
+# DISABLED. Standby does not just silence the firmware - it powers the VFD
+# panel off, so the display goes dark. That was missed because GetDisplayData
+# returns the framebuffer, which still accepts sketch writes and still reads
+# back lit pixels while the panel itself is unlit. Repaint rate cannot tell an
+# idle firmware apart from a dark panel; both read 0/sec. Do not re-enable
+# without confirming against the physical display.
+AUTO_STANDBY_ON_STOP = False
 
 # How long the transport must stay stopped before we drop to standby. A queue
 # transition can report Stop for a moment, and standby-ing there would kill

@@ -14,6 +14,7 @@ default for HA players); this hardware predates FLAC streaming support.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 
@@ -42,11 +43,18 @@ _LOGGER = logging.getLogger(__name__)
 # only available wake.
 WAKE_URL = "http://127.0.0.1:1/wake"
 
-# GetTransportState -> HA state. "Standby" is the device's soft-off.
+# How long to wait before trying to stop the wake, and how many times.
+WAKE_STOP_DELAY = 1.5
+WAKE_STOP_ATTEMPTS = 3
+
+# GetTransportState -> HA state. "Standby" is the device's soft-off, which
+# also unpowers the VFD panel. "Disconnected" is reported after a reboot,
+# before it has attached to a server.
 _TRANSPORT_STATES = {
     "play": MediaPlayerState.PLAYING,
     "pause": MediaPlayerState.PAUSED,
     "stop": MediaPlayerState.IDLE,
+    "disconnected": MediaPlayerState.IDLE,
     "standby": MediaPlayerState.OFF,
 }
 
@@ -197,7 +205,22 @@ class SoundBridgeMediaPlayer(MediaPlayerEntity):
         which wakes it without making a sound or disturbing the queue.
         """
         await self._client.async_rcp(f"PlayStation {WAKE_URL}")
-        await self._client.async_rcp("Stop")
+
+        # Stopping immediately does not take - the device is still trying to
+        # connect and goes back to retrying, which leaves it stuck in Play
+        # with a blank screen indefinitely. Give it a moment, then confirm the
+        # transport actually came to rest.
+        for _ in range(WAKE_STOP_ATTEMPTS):
+            await asyncio.sleep(WAKE_STOP_DELAY)
+            await self._client.async_rcp("Stop")
+            state = await self._client.async_rcp_value("GetTransportState")
+            if (state or "").strip().lower() != "play":
+                return
+        _LOGGER.warning(
+            "SoundBridge %s still reports Play after wake; it may sit "
+            "retrying with a blank display",
+            self._client.host,
+        )
 
     async def async_turn_off(self) -> None:
         await self._client.async_rcp("SetPowerState standby")
