@@ -486,6 +486,38 @@ class SoundBridgeClient:
             await self._run_sketch_command('marquee -stop ""', timeout)
             await self._run_sketch_command("clear", timeout)
 
+    async def async_reboot(self, timeout: float = DEFAULT_CMD_TIMEOUT) -> None:
+        """Reboot the device, which is the only way to free the display.
+
+        Once the SoundBridge has been given a playback context - played,
+        paused, or stopped - its firmware permanently owns the screen,
+        scrolling its own status message ("Playback Stopped", "No songs
+        selected", now-playing) at around 25-40 repaints a second. A sketch
+        marquee cannot outrun that, and nothing in the RCP command set clears
+        it: NowPlayingClear and ServerDisconnect only change which message it
+        scrolls. After a reboot the transport reports `Disconnected`, the
+        firmware has nothing to say, and drawn content is visible again.
+
+        The device is unreachable for roughly 20 seconds afterwards.
+        """
+        # Our held connections are about to be dropped by the device anyway.
+        async with self._lock:
+            self._cancel_pending_release()
+            self._stop_scroll_loop()
+            await self._reset_connection()
+        async with self._rcp_lock:
+            await self._reset_rcp()
+
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(self._host, self._port), timeout=timeout
+        )
+        try:
+            await _read_until(reader, (SHELL_PROMPT,), timeout)
+            writer.write(b"reboot\r\n")
+            await writer.drain()
+        finally:
+            writer.close()
+
     async def async_release(self, timeout: float = DEFAULT_CMD_TIMEOUT) -> None:
         """Hand the display back to the device's own UI and disconnect."""
         async with self._lock:

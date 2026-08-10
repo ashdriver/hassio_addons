@@ -101,6 +101,24 @@ clear:
           integration: soundbridge
           multiple: true
 
+reboot:
+  name: Reboot device
+  description: >-
+    Reboot the SoundBridge. This is the only way to free the display after the
+    device has played, paused or stopped anything: from then on its firmware
+    permanently owns the screen, scrolling its own status message over
+    anything you draw. After a reboot the display is usable again. The device
+    is unreachable for roughly 20 seconds.
+  fields:
+    device_id:
+      name: Device
+      description: The SoundBridge unit(s) to reboot.
+      required: true
+      selector:
+        device:
+          integration: soundbridge
+          multiple: true
+
 release:
   name: Release display
   description: Hand control of the display back to the device's own UI (clock/now-playing) and disconnect.

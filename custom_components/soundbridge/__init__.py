@@ -1,20 +1,27 @@
 """The Roku SoundBridge Display integration.
 
-Exposes three services (see services.yaml for the full field list):
+Exposes four services (see services.yaml for the full field list):
   soundbridge.send_text  - render text on the display (static or scrolling)
   soundbridge.clear      - clear the display / stop any running marquee
   soundbridge.release    - hand control back to the device's own UI
+  soundbridge.reboot     - reboot the unit, the only way to free the display
+                           once playback has given the firmware the screen
 
 All three take a `device_id` target so multiple SoundBridge units can be
 configured and addressed independently.
 
 IMPORTANT: while a message is being shown (i.e. between send_text and the
 next release/clear/timeout), the connection to the device is held open
-inside its `sketch` sub-shell. This is required for the text to actually
-stay on screen (confirmed empirically - see client.py for details), but it
-also means the device's own UI (clock, now-playing, menus) is frozen for
-that whole period. Use `duration` on send_text to auto-release rather than
-holding the display indefinitely, unless that's genuinely what you want.
+inside its `sketch` sub-shell. That is required for drawn content to stay
+up, and it has a useful side effect: an active sketch session also defers
+the unit's ~17 second idle standby, so the display stays powered.
+
+The hard constraint is the firmware, not standby. Once the unit has played,
+paused or stopped anything, its firmware permanently owns the screen and
+scrolls its own status message at 25-40 repaints a second, over the top of
+anything drawn here. Only soundbridge.reboot clears that. So the device can
+be a Music Assistant speaker or a status display, and switching from the
+former back to the latter costs a reboot (~20s).
 """
 from __future__ import annotations
 
@@ -56,6 +63,7 @@ PLATFORMS = [Platform.MEDIA_PLAYER]
 SERVICE_SEND_TEXT = "send_text"
 SERVICE_CLEAR = "clear"
 SERVICE_RELEASE = "release"
+SERVICE_REBOOT = "reboot"
 
 CONF_DURATION = "duration"
 
@@ -132,6 +140,19 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 await client.async_release()
             except SoundBridgeError as err:
                 raise HomeAssistantError(f"SoundBridge release failed: {err}") from err
+
+    async def handle_reboot(call: ServiceCall) -> None:
+        for device_id in call.data["device_id"]:
+            client = _client_for_device(hass, device_id)
+            try:
+                await client.async_reboot()
+            except SoundBridgeError as err:
+                raise HomeAssistantError(f"SoundBridge reboot failed: {err}") from err
+
+    if not hass.services.has_service(DOMAIN, SERVICE_REBOOT):
+        hass.services.async_register(
+            DOMAIN, SERVICE_REBOOT, handle_reboot, schema=DEVICE_TARGET_SCHEMA
+        )
 
     if not hass.services.has_service(DOMAIN, SERVICE_SEND_TEXT):
         hass.services.async_register(
