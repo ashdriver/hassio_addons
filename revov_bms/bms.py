@@ -14,10 +14,14 @@ import constants
 
 from datetime import datetime
 
-print("Starting up....")
+print("Starting up...")
 
 config = {}
-script_version = ""
+manifest_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
+with open(manifest_path) as file:
+    script_version = yaml.load(file, Loader=yaml.FullLoader)['version']
+
+print("BMS App Version: " + script_version)
 
 if os.path.exists('/data/options.json'):
     print("Loading options.json")
