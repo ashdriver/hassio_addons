@@ -14,7 +14,7 @@ import constants
 
 from datetime import datetime
 
-print("Starting up...")
+print("Starting up....")
 
 config = {}
 script_version = ""
