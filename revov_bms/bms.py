@@ -187,6 +187,8 @@ def ha_discovery():
         device['sw_version'] = bms_version
         disc_payload['device'] = device
 
+        disc_payload['device_class'] = "battery";
+
         for p in range (1,packs+1):
 
             for i in range(0,cells):
@@ -237,17 +239,25 @@ def ha_discovery():
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_soh"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/soh"
             disc_payload['unit_of_measurement'] = "%"
+
             disc_payload['state_class'] = "measurement";
-            disc_payload['device_class'] = "battery";
+
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Cycles"
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_cycles"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/cycles"
             disc_payload['unit_of_measurement'] = ""
-            disc_payload['state_class'] = "measurement";
-            disc_payload['device_class'] = "battery";
+
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            print("published CYCLES config with config: " + json.dumps(disc_payload))
+
+            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " State of Charge"
+            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_soc"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/soc"
+            disc_payload['unit_of_measurement'] = "%"
+            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
 
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Min Cell"
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_min_cell"
@@ -267,15 +277,9 @@ def ha_discovery():
             disc_payload['unit_of_measurement'] = "Ah"
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
-            disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " State of Charge"
-            disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_soc"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p).zfill(config['zero_pad_number_packs']) + "/soc"
-            disc_payload['unit_of_measurement'] = "%"
-            disc_payload['state_class'] = "measurement";
-            disc_payload['device_class'] = "mbattery";
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload.pop('unit_of_measurement')
+            disc_payload.pop('state_class')
 
             disc_payload['name'] = "Pack " + str(p).zfill(config['zero_pad_number_packs']) + " Protections"
             disc_payload['unique_id'] = "bms_" + bms_sn + "_pack_" + str(p).zfill(config['zero_pad_number_packs']) + "_protections"
