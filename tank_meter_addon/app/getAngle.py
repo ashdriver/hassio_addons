@@ -300,15 +300,25 @@ log = logging.getLogger()
 
 log.info("App Started.")
 
+autoDiscoverPayload ={  "~": "tankdial","state_class": "measurement","state_topic":"~/result","name":"Rain Tank Level Dial Angle","unique_id":"raintank_dialangle","device":{"identifiers":["tankdial"],"name":"Rain Tank",}}
+
+def on_connect(client, userdata, connect_flags, reason_code, properties):
+    if reason_code != 0:
+        log.error("MQTT connect failed: " + str(reason_code))
+        return
+    log.info("MQTT connected (reason_code=" + str(reason_code) + "), (re)subscribing.")
+    # Must resubscribe here - a reconnect starts a fresh session with no subscriptions.
+    client.subscribe("tankdial/image_ready")
+    client.publish("homeassistant/sensor/tankdial/result/config", json.dumps(autoDiscoverPayload), retain=True)
+
+def on_disconnect(client, userdata, disconnect_flags, reason_code, properties):
+    log.warning("MQTT disconnected, reason_code=" + str(reason_code))
+
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(MQTT_USER, MQTT_PASS)
+client.on_connect = on_connect
+client.on_disconnect = on_disconnect
+client.on_message = image_ready
 client.connect(MQTT_SERVER, MQTT_PORT)
-
-client.on_message=image_ready
-
-autoDiscoverPayload ={  "~": "tankdial","state_class": "measurement","state_topic":"~/result","name":"Rain Tank Level Dial Angle","unique_id":"raintank_dialangle","device":{"identifiers":["tankdial"],"name":"Rain Tank",}}
-client.publish("homeassistant/sensor/tankdial/result/config", json.dumps(autoDiscoverPayload),  retain=True)
-
-client.subscribe("tankdial/image_ready")
 
 client.loop_forever()
