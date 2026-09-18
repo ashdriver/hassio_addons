@@ -31,8 +31,8 @@ CONFIG_TOLERANCE = int(os.environ['TOLERANCE'])
 innerInnerRadius = 125
 outerInnerRadius = 145
 
-innerOuterRadius = 205
-outerOuterRadius = 225
+innerOuterRadius = 195
+outerOuterRadius = 215
 
 OUTPUT_DIR = "/config/www/dialDebugImages/"
 
@@ -223,8 +223,7 @@ def getAngle(image,debug):
 
     finalAngle = outerAngle
     if outerAngle == -1:
-        # Ignore inner completely - just adds inaccuracies if no outer.
-        if True or innerAngle == -1000:
+        if innerAngle == -1000:
             # Means no inner and single outer was bad.
             log.error(">>>>>> Skipping this round - no inner found single outer was bad")
             TS = datetime.datetime.now().strftime("%H%M-%y%m%d")
