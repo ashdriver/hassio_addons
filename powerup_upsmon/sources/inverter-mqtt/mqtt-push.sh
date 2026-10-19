@@ -15,7 +15,7 @@ pushMQTTData () {
         -p $MQTT_PORT \
         -u "$MQTT_USERNAME" \
         -P "$MQTT_PASSWORD" \
-        -i $MQTT_CLIENTID \
+        -i "${MQTT_CLIENTID}_pub" \
         -t "$MQTT_TOPIC/sensor/"$MQTT_DEVICENAME"_$1" \
         -m "$2"
     

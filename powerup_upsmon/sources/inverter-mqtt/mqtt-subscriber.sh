@@ -16,4 +16,4 @@ do
     echo "Incoming request send: [$rawcmd] to inverter."
     /opt/inverter-cli/bin/inverter_poller -r $rawcmd;
 
-done < <(mosquitto_sub -h $MQTT_SERVER -p $MQTT_PORT -u "$MQTT_USERNAME" -P "$MQTT_PASSWORD" -i $MQTT_CLIENTID -t "$MQTT_TOPIC/sensor/$MQTT_DEVICENAME" -q 0)
+done < <(mosquitto_sub -h $MQTT_SERVER -p $MQTT_PORT -u "$MQTT_USERNAME" -P "$MQTT_PASSWORD" -i "${MQTT_CLIENTID}_sub" -t "$MQTT_TOPIC/sensor/$MQTT_DEVICENAME" -q 0)

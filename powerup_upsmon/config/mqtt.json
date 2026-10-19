@@ -1,10 +1,10 @@
 {
-    "server": "10.0.0.77",
+    "server": "",
     "port": "1883",
     "topic": "homeassistant",
     "devicename": "powerup",
-    "username": "mqtt_user",
-    "password": "mqtt_pass",
+    "username": "",
+    "password": "",
 	"clientid": "powerup_1",
     "influx": {
         "enabled": "false",
