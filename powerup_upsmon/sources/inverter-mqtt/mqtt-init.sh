@@ -15,7 +15,7 @@ registerTopic () {
         -p $MQTT_PORT \
         -u "$MQTT_USERNAME" \
         -P "$MQTT_PASSWORD" \
-        -i $MQTT_CLIENTID \
+        -i "${MQTT_CLIENTID}_init" \
         -t "$MQTT_TOPIC/sensor/"$MQTT_DEVICENAME"_$1/config" \
         -m "{
             \"name\": \""$MQTT_DEVICENAME"_$1\",
@@ -31,7 +31,7 @@ registerInverterRawCMD () {
         -p $MQTT_PORT \
         -u "$MQTT_USERNAME" \
         -P "$MQTT_PASSWORD" \
-        -i $MQTT_CLIENTID \
+        -i "${MQTT_CLIENTID}_init" \
         -t "$MQTT_TOPIC/sensor/$MQTT_DEVICENAME/config" \
         -m "{
             \"name\": \""$MQTT_DEVICENAME"\",
